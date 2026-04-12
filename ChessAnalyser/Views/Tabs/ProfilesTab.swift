@@ -14,6 +14,8 @@ struct ProfilesTab: View {
                     profileList
                 }
             }
+            .frame(maxWidth: 700)
+            .frame(maxWidth: .infinity)
             .background(AppColors.background)
             .navigationTitle("Profiles")
             .toolbarColorScheme(.dark, for: .navigationBar)

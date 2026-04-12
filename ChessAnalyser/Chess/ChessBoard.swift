@@ -670,8 +670,9 @@ struct ChessBoard {
     // MARK: - Castling Rights Update
 
     private mutating func updateCastlingRights(from: Square, to: Square, piece: PieceType) {
+        // Called BEFORE sideToMove is flipped, so sideToMove = the side that just moved
         if piece == .king {
-            if sideToMove.opposite == .white { // Already flipped
+            if sideToMove == .white {
                 castlingRights.remove(.whiteKingside)
                 castlingRights.remove(.whiteQueenside)
             } else {

@@ -10,6 +10,8 @@ struct ProfileDetailView: View {
     var body: some View {
         VStack(spacing: 0) {
             profileHeader
+                .frame(maxWidth: 700)
+                .frame(maxWidth: .infinity)
 
             if viewModel.isLoading && viewModel.games.isEmpty {
                 Spacer()
@@ -94,6 +96,8 @@ struct ProfileDetailView: View {
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
+                .frame(maxWidth: 700)
+                .frame(maxWidth: .infinity)
                 .refreshable {
                     await viewModel.refresh(for: profile.username)
                 }

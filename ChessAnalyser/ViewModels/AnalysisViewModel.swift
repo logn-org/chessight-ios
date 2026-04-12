@@ -444,16 +444,14 @@ final class AnalysisViewModel {
 
         if explorationAnalysisEnabled {
             saveCurrentEvalToSticky()
+            // Clear all stale results so arrows/classification don't show old data
+            explorationBeforeResult = explorationAfterResult // save for classification
             explorationAfterResult = nil
             lastSuggestedBestMove = nil
+            lastExplorationClassification = nil
 
-            if playedSuggestedMove {
-                lastExplorationClassification = .best
-                explorationBeforeResult = explorationAfterResult
-                analyzeExplorationPositionAfterOnly()
-            } else {
-                analyzeExplorationPosition()
-            }
+            // Always do full analysis to get proper classification
+            analyzeExplorationPosition()
         } else {
             // No analysis — clear any stale results
             explorationAfterResult = nil
@@ -628,6 +626,40 @@ final class AnalysisViewModel {
         explorationBoard ?? gameState.currentBoard
     }
 
+    /// Detect checkmate or stalemate on the current display board
+    var boardGameEndStatus: GameEndStatus? {
+        let board = displayBoard
+        let color = board.sideToMove
+        if !board.hasLegalMoves(color: color) {
+            if board.isKingInCheck(color: color) {
+                let winner = color.opposite
+                return .checkmate(winner: winner)
+            } else {
+                return .stalemate
+            }
+        }
+        return nil
+    }
+
+    enum GameEndStatus {
+        case checkmate(winner: PieceColor)
+        case stalemate
+
+        var isCheckmate: Bool {
+            if case .checkmate = self { return true }
+            return false
+        }
+
+        var displayText: String {
+            switch self {
+            case .checkmate(let winner):
+                return "Checkmate\n\(winner == .white ? "White" : "Black") wins!"
+            case .stalemate:
+                return "Stalemate\nDraw"
+            }
+        }
+    }
+
     var currentEval: EngineEval {
         let eval: EngineEval?
         if isExploring {
@@ -718,16 +750,24 @@ final class AnalysisViewModel {
 
                 let isCapture = target != nil || (piece.type == .pawn && to == board.enPassantSquare)
                 let canMove: Bool
-                if piece.type == .pawn && !isCapture && to.file == from.file {
+                if piece.type == .pawn {
                     let dir = piece.color == .white ? 1 : -1
                     let startRank = piece.color == .white ? 1 : 6
-                    if to.rank - from.rank == dir && board.piece(at: to) == nil {
+                    if to.file == from.file && !isCapture {
+                        // Forward moves (same file, no capture)
+                        if to.rank - from.rank == dir && board.piece(at: to) == nil {
+                            canMove = true
+                        } else if from.rank == startRank && to.rank - from.rank == 2 * dir
+                                    && board.piece(at: to) == nil
+                                    && board.piece(at: Square(file: from.file, rank: from.rank + dir)) == nil {
+                            canMove = true
+                        } else { canMove = false }
+                    } else if abs(to.file - from.file) == 1 && to.rank - from.rank == dir && isCapture {
+                        // Diagonal captures only (must have enemy piece or en passant)
                         canMove = true
-                    } else if from.rank == startRank && to.rank - from.rank == 2 * dir
-                                && board.piece(at: to) == nil
-                                && board.piece(at: Square(file: from.file, rank: from.rank + dir)) == nil {
-                        canMove = true
-                    } else { canMove = false }
+                    } else {
+                        canMove = false
+                    }
                 } else {
                     canMove = board.canAttack(from: from, to: to, piece: piece)
                 }

@@ -282,14 +282,20 @@ final class PuzzleViewModel {
 
                 let isCapture = target != nil || (piece.type == .pawn && to == board.enPassantSquare)
                 let canMove: Bool
-                if piece.type == .pawn && !isCapture && to.file == from.file {
+                if piece.type == .pawn {
                     let dir = piece.color == .white ? 1 : -1
                     let startRank = piece.color == .white ? 1 : 6
-                    if to.rank - from.rank == dir && board.piece(at: to) == nil { canMove = true }
-                    else if from.rank == startRank && to.rank - from.rank == 2 * dir
-                                && board.piece(at: to) == nil
-                                && board.piece(at: Square(file: from.file, rank: from.rank + dir)) == nil { canMove = true }
-                    else { canMove = false }
+                    if to.file == from.file && !isCapture {
+                        if to.rank - from.rank == dir && board.piece(at: to) == nil { canMove = true }
+                        else if from.rank == startRank && to.rank - from.rank == 2 * dir
+                                    && board.piece(at: to) == nil
+                                    && board.piece(at: Square(file: from.file, rank: from.rank + dir)) == nil { canMove = true }
+                        else { canMove = false }
+                    } else if abs(to.file - from.file) == 1 && to.rank - from.rank == dir && isCapture {
+                        canMove = true
+                    } else {
+                        canMove = false
+                    }
                 } else { canMove = board.canAttack(from: from, to: to, piece: piece) }
 
                 if canMove {

@@ -106,186 +106,229 @@ struct BotGameView: View {
     private var gameView: some View {
         GeometryReader { geometry in
             let screenWidth = geometry.size.width
-            let boardSize = viewModel.showHints
-                ? screenWidth - AppSpacing.evalBarWidth - AppSpacing.sm * 2 - AppSpacing.xs
-                : screenWidth - AppSpacing.sm * 2
+            let isIPad = AppSpacing.isIPad(screenWidth)
+            let boardSize: CGFloat = isIPad
+                ? AppSpacing.boardSize(for: screenWidth, screenHeight: geometry.size.height, showEvalBar: viewModel.showHints)
+                : max(1, viewModel.showHints
+                    ? screenWidth - AppSpacing.evalBarWidth - AppSpacing.sm * 2 - AppSpacing.xs
+                    : screenWidth - AppSpacing.sm * 2)
 
-            VStack(spacing: 0) {
-                // Bot info (fixed height)
-                HStack {
-                    Image(systemName: "cpu")
-                        .foregroundStyle(AppColors.accent)
-                    Text("Stockfish (Depth \(viewModel.botDepth))")
-                        .font(AppFonts.bodyBold)
-                        .foregroundStyle(AppColors.textPrimary)
-                    Spacer()
-                    if viewModel.isBotThinking {
-                        ProgressView().scaleEffect(0.7).tint(AppColors.accent)
-                        Text("Thinking...").font(AppFonts.caption).foregroundStyle(AppColors.textMuted)
+            if isIPad {
+                HStack(alignment: .top, spacing: AppSpacing.lg) {
+                    // Left: Board area
+                    VStack(spacing: 0) {
+                        botGameBotInfo
+                        botGameBoardSection(boardSize: boardSize)
+                        botGameClassificationInfo
+                        botGamePlayerInfo
                     }
-                }
-                .padding(.horizontal, AppSpacing.md)
-                .frame(height: 32)
+                    .frame(width: boardSize + AppSpacing.sm * 2 + (viewModel.showHints ? AppSpacing.evalBarWidth + AppSpacing.xs : 0))
 
-                // Board + eval bar (only when hints on)
-                HStack(spacing: 0) {
-                    if viewModel.showHints {
-                        EvalBarView(
-                            eval: viewModel.currentEval,
-                            sideToMoveIsWhite: viewModel.board.sideToMove == .white
-                        )
-                        .frame(height: boardSize)
-                    }
-
-                    ZStack {
-                        InteractiveBoardView(
-                            board: viewModel.board,
-                            selectedSquare: viewModel.selectedSquare,
-                            legalMoveTargets: viewModel.legalMoveTargets,
-                            lastMove: lastMove,
-                            arrows: gameArrows,
-                            moveClassification: viewModel.showHints ? viewModel.lastMoveClassification : nil,
-                            showCoordinates: appState.engineConfig.showBoardCoordinates,
-                            flipped: viewModel.isFlipped,
-                            onTapSquare: { viewModel.tapSquare($0) }
-                        )
-
-                        if viewModel.showPromotionPicker {
-                            PromotionPickerView(
-                                color: viewModel.playerColor,
-                                onSelect: { viewModel.completePromotion(piece: $0) }
-                            )
-                        }
-                    }
-                    .frame(width: boardSize, height: boardSize)
-                    .padding(.leading, AppSpacing.xs)
-                }
-                .padding(.horizontal, AppSpacing.sm)
-
-                // Classification info (when hints on)
-                if viewModel.showHints, let classification = viewModel.lastMoveClassification,
-                   classification != .none {
-                    HStack(spacing: AppSpacing.sm) {
-                        Image(systemName: classification.iconName)
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundStyle(classification.color)
-                        Text(classification.label)
-                            .font(AppFonts.captionBold)
-                            .foregroundStyle(classification.color)
+                    // Right: Controls panel
+                    VStack(spacing: AppSpacing.md) {
+                        botGameControls
+                        botGameMoveHistory
                         Spacer()
                     }
-                    .padding(.horizontal, AppSpacing.md)
-                    .frame(height: 24)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, AppSpacing.md)
                 }
-
-                // Player info + result (fixed height)
-                HStack {
-                    Circle()
-                        .fill(viewModel.playerColor == .white ? Color.white : Color.black)
-                        .frame(width: 12, height: 12)
-                        .overlay(Circle().stroke(AppColors.surfaceLight, lineWidth: 1))
-                    if viewModel.gameOver, let result = viewModel.gameResult {
-                        Text(result)
-                            .font(AppFonts.captionBold)
-                            .foregroundStyle(AppColors.accent)
-                            .lineLimit(1)
-                    } else {
-                        Text("You")
-                            .font(AppFonts.bodyBold)
-                            .foregroundStyle(AppColors.textPrimary)
-                    }
+            } else {
+                VStack(spacing: 0) {
+                    botGameBotInfo
+                    botGameBoardSection(boardSize: boardSize)
+                    botGameClassificationInfo
+                    botGamePlayerInfo
+                    botGameControls
+                    botGameMoveHistory
                     Spacer()
                 }
-                .padding(.horizontal, AppSpacing.md)
-                .frame(height: 32)
-
-                // Controls
-                HStack(spacing: AppSpacing.lg) {
-                    // Flip
-                    Button { viewModel.isFlipped.toggle() } label: {
-                        Image(systemName: "arrow.up.arrow.down").font(.body)
-                    }
-
-                    // Undo
-                    Button { viewModel.undoLastTwoMoves() } label: {
-                        Image(systemName: "arrow.uturn.backward").font(.body)
-                    }
-                    .disabled(viewModel.moveHistory.count < 2 || viewModel.isBotThinking)
-
-                    // Hints toggle
-                    Button { viewModel.toggleHints() } label: {
-                        Image(systemName: viewModel.showHints ? "lightbulb.fill" : "lightbulb")
-                            .font(.body)
-                            .foregroundStyle(viewModel.showHints ? AppColors.accent : AppColors.textPrimary)
-                    }
-
-                    // Depth adjuster
-                    HStack(spacing: 4) {
-                        Button { if viewModel.botDepth > 1 { viewModel.botDepth -= 1 } } label: {
-                            Image(systemName: "minus.circle").font(.body)
-                        }
-                        Text("D\(viewModel.botDepth)")
-                            .font(AppFonts.captionBold)
-                            .foregroundStyle(AppColors.textSecondary)
-                            .frame(width: 30)
-                        Button { if viewModel.botDepth < 20 { viewModel.botDepth += 1 } } label: {
-                            Image(systemName: "plus.circle").font(.body)
-                        }
-                    }
-
-                    // Resign / New game
-                    if viewModel.gameOver {
-                        Button { showSetup = true } label: {
-                            Text("New Game")
-                                .font(AppFonts.captionBold)
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, AppSpacing.sm)
-                                .padding(.vertical, AppSpacing.xs)
-                                .background(AppColors.accent)
-                                .clipShape(Capsule())
-                        }
-                    } else {
-                        Button { viewModel.resign() } label: {
-                            Image(systemName: "flag.fill")
-                                .font(.body)
-                                .foregroundStyle(AppColors.blunder)
-                        }
-                    }
-                }
-                .foregroundStyle(AppColors.textPrimary)
-                .padding(.vertical, AppSpacing.sm)
-
-                // Move history
-                if !viewModel.moveHistory.isEmpty {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 2) {
-                            ForEach(viewModel.moveHistory) { move in
-                                if move.isWhite {
-                                    Text("\(move.moveNumber).")
-                                        .font(AppFonts.caption)
-                                        .foregroundStyle(AppColors.textMuted)
-                                }
-                                Text(move.san)
-                                    .font(AppFonts.moveText)
-                                    .foregroundStyle(AppColors.textPrimary)
-                                    .padding(.horizontal, 3)
-                            }
-                        }
-                        .padding(.horizontal, AppSpacing.sm)
-                    }
-                    .frame(height: 30)
-                    .background(AppColors.surface)
-                    .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadiusSm))
-                    .padding(.horizontal, AppSpacing.sm)
-                }
-
-                Spacer()
             }
         }
         .background(AppColors.background)
         .navigationTitle("vs Stockfish")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
+    }
+
+    // MARK: - Bot Game Subviews
+
+    private var botGameBotInfo: some View {
+        HStack {
+            Image(systemName: "cpu")
+                .foregroundStyle(AppColors.accent)
+            Text("Stockfish (Depth \(viewModel.botDepth))")
+                .font(AppFonts.bodyBold)
+                .foregroundStyle(AppColors.textPrimary)
+            Spacer()
+            if viewModel.isBotThinking {
+                ProgressView().scaleEffect(0.7).tint(AppColors.accent)
+                Text("Thinking...").font(AppFonts.caption).foregroundStyle(AppColors.textMuted)
+            }
+        }
+        .padding(.horizontal, AppSpacing.md)
+        .frame(height: 32)
+    }
+
+    private func botGameBoardSection(boardSize: CGFloat) -> some View {
+        HStack(spacing: 0) {
+            if viewModel.showHints {
+                EvalBarView(
+                    eval: viewModel.currentEval,
+                    sideToMoveIsWhite: viewModel.board.sideToMove == .white
+                )
+                .frame(height: boardSize)
+            }
+
+            ZStack {
+                InteractiveBoardView(
+                    board: viewModel.board,
+                    selectedSquare: viewModel.selectedSquare,
+                    legalMoveTargets: viewModel.legalMoveTargets,
+                    lastMove: lastMove,
+                    arrows: gameArrows,
+                    moveClassification: viewModel.showHints ? viewModel.lastMoveClassification : nil,
+                    showCoordinates: appState.engineConfig.showBoardCoordinates,
+                    flipped: viewModel.isFlipped,
+                    onTapSquare: { viewModel.tapSquare($0) }
+                )
+
+                if viewModel.showPromotionPicker {
+                    PromotionPickerView(
+                        color: viewModel.playerColor,
+                        onSelect: { viewModel.completePromotion(piece: $0) }
+                    )
+                }
+            }
+            .frame(width: boardSize, height: boardSize)
+            .padding(.leading, AppSpacing.xs)
+        }
+        .padding(.horizontal, AppSpacing.sm)
+    }
+
+    private var botGameClassificationInfo: some View {
+        Group {
+            if viewModel.showHints, let classification = viewModel.lastMoveClassification,
+               classification != .none {
+                HStack(spacing: AppSpacing.sm) {
+                    Image(systemName: classification.iconName)
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(classification.color)
+                    Text(classification.label)
+                        .font(AppFonts.captionBold)
+                        .foregroundStyle(classification.color)
+                    Spacer()
+                }
+                .padding(.horizontal, AppSpacing.md)
+                .frame(height: 24)
+            }
+        }
+    }
+
+    private var botGamePlayerInfo: some View {
+        HStack {
+            Circle()
+                .fill(viewModel.playerColor == .white ? Color.white : Color.black)
+                .frame(width: 12, height: 12)
+                .overlay(Circle().stroke(AppColors.surfaceLight, lineWidth: 1))
+            if viewModel.gameOver, let result = viewModel.gameResult {
+                Text(result)
+                    .font(AppFonts.captionBold)
+                    .foregroundStyle(AppColors.accent)
+                    .lineLimit(1)
+            } else {
+                Text("You")
+                    .font(AppFonts.bodyBold)
+                    .foregroundStyle(AppColors.textPrimary)
+            }
+            Spacer()
+        }
+        .padding(.horizontal, AppSpacing.md)
+        .frame(height: 32)
+    }
+
+    private var botGameControls: some View {
+        HStack(spacing: AppSpacing.lg) {
+            // Flip
+            Button { viewModel.isFlipped.toggle() } label: {
+                Image(systemName: "arrow.up.arrow.down").font(.body)
+            }
+
+            // Undo
+            Button { viewModel.undoLastTwoMoves() } label: {
+                Image(systemName: "arrow.uturn.backward").font(.body)
+            }
+            .disabled(viewModel.moveHistory.count < 2 || viewModel.isBotThinking)
+
+            // Hints toggle
+            Button { viewModel.toggleHints() } label: {
+                Image(systemName: viewModel.showHints ? "lightbulb.fill" : "lightbulb")
+                    .font(.body)
+                    .foregroundStyle(viewModel.showHints ? AppColors.accent : AppColors.textPrimary)
+            }
+
+            // Depth adjuster
+            HStack(spacing: 4) {
+                Button { if viewModel.botDepth > 1 { viewModel.botDepth -= 1 } } label: {
+                    Image(systemName: "minus.circle").font(.body)
+                }
+                Text("D\(viewModel.botDepth)")
+                    .font(AppFonts.captionBold)
+                    .foregroundStyle(AppColors.textSecondary)
+                    .frame(width: 30)
+                Button { if viewModel.botDepth < 20 { viewModel.botDepth += 1 } } label: {
+                    Image(systemName: "plus.circle").font(.body)
+                }
+            }
+
+            // Resign / New game
+            if viewModel.gameOver {
+                Button { showSetup = true } label: {
+                    Text("New Game")
+                        .font(AppFonts.captionBold)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, AppSpacing.sm)
+                        .padding(.vertical, AppSpacing.xs)
+                        .background(AppColors.accent)
+                        .clipShape(Capsule())
+                }
+            } else {
+                Button { viewModel.resign() } label: {
+                    Image(systemName: "flag.fill")
+                        .font(.body)
+                        .foregroundStyle(AppColors.blunder)
+                }
+            }
+        }
+        .foregroundStyle(AppColors.textPrimary)
+        .padding(.vertical, AppSpacing.sm)
+    }
+
+    private var botGameMoveHistory: some View {
+        Group {
+            if !viewModel.moveHistory.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 2) {
+                        ForEach(viewModel.moveHistory) { move in
+                            if move.isWhite {
+                                Text("\(move.moveNumber).")
+                                    .font(AppFonts.caption)
+                                    .foregroundStyle(AppColors.textMuted)
+                            }
+                            Text(move.san)
+                                .font(AppFonts.moveText)
+                                .foregroundStyle(AppColors.textPrimary)
+                                .padding(.horizontal, 3)
+                        }
+                    }
+                    .padding(.horizontal, AppSpacing.sm)
+                }
+                .frame(height: 30)
+                .background(AppColors.surface)
+                .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadiusSm))
+                .padding(.horizontal, AppSpacing.sm)
+            }
+        }
     }
 
     // MARK: - Helpers

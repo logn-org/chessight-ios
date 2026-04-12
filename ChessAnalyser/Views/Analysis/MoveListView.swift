@@ -8,8 +8,19 @@ struct MoveListView: View {
     let analysisCache: [Int: MoveAnalysis]
     let currentMoveIndex: Int
     let onTapMove: (Int) -> Void
+    var vertical: Bool = false
 
     var body: some View {
+        if vertical {
+            verticalMoveList
+        } else {
+            horizontalMoveList
+        }
+    }
+
+    // MARK: - Horizontal (iPhone / compact)
+
+    private var horizontalMoveList: some View {
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 2) {
@@ -38,6 +49,84 @@ struct MoveListView: View {
         .frame(height: 36)
         .background(AppColors.surface)
     }
+
+    // MARK: - Vertical (iPad side panel)
+
+    private var verticalMoveList: some View {
+        ScrollViewReader { proxy in
+            LazyVGrid(columns: [
+                GridItem(.flexible(), spacing: 0),
+                GridItem(.flexible(), spacing: 0),
+                GridItem(.flexible(), spacing: 0),
+            ], spacing: 4) {
+                ForEach(movePairs, id: \.number) { pair in
+                    // Move number
+                    Text("\(pair.number).")
+                        .font(AppFonts.caption)
+                        .foregroundStyle(AppColors.textMuted)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .padding(.trailing, 2)
+
+                    // White move
+                    if let white = pair.white {
+                        moveChip(white)
+                            .id(white.moveIndex)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    } else {
+                        Color.clear.frame(height: 1)
+                    }
+
+                    // Black move
+                    if let black = pair.black {
+                        moveChip(black)
+                            .id(black.moveIndex)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    } else {
+                        Color.clear.frame(height: 1)
+                    }
+                }
+            }
+            .padding(.horizontal, AppSpacing.xs)
+            .onChange(of: currentMoveIndex) { _, newIndex in
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    proxy.scrollTo(newIndex, anchor: .center)
+                }
+            }
+        }
+    }
+
+    // MARK: - Move Pairs for vertical layout
+
+    private struct MovePair {
+        let number: Int
+        let white: GameMove?
+        let black: GameMove?
+    }
+
+    private var movePairs: [MovePair] {
+        var pairs: [MovePair] = []
+        var i = 0
+        while i < moves.count {
+            let white = moves[i].isWhite ? moves[i] : nil
+            let black: GameMove?
+            if white != nil && i + 1 < moves.count && !moves[i + 1].isWhite {
+                black = moves[i + 1]
+                i += 2
+            } else if white == nil {
+                // Black move without white (shouldn't happen but handle gracefully)
+                pairs.append(MovePair(number: moves[i].moveNumber, white: nil, black: moves[i]))
+                i += 1
+                continue
+            } else {
+                black = nil
+                i += 1
+            }
+            pairs.append(MovePair(number: white?.moveNumber ?? (black?.moveNumber ?? 1), white: white, black: black))
+        }
+        return pairs
+    }
+
+    // MARK: - Move Chip
 
     private func moveChip(_ move: GameMove) -> some View {
         let isSelected = move.moveIndex == currentMoveIndex

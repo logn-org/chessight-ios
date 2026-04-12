@@ -120,6 +120,10 @@ struct AnalysisView: View {
                             onSelect: { viewModel.completePromotion(piece: $0) }
                         )
                     }
+
+                    if let endStatus = viewModel.boardGameEndStatus {
+                        gameEndOverlay(endStatus)
+                    }
                 }
                 .frame(width: boardSize, height: boardSize)
                 .padding(.leading, AppSpacing.xs)
@@ -320,13 +324,20 @@ struct AnalysisView: View {
     // MARK: - iPad Layout
 
     private func iPadLayout(geometry: GeometryProxy) -> some View {
-        let boardSize = max(1, min(geometry.size.height - 80, geometry.size.width - 370))
+        let screenH = geometry.size.height
+        let screenW = geometry.size.width
+        // Board: fit within height (minus headers+controls ~140pt) and cap at 55% width
+        let boardSize = max(1, min(screenH - 140, screenW * 0.55))
         let flipped = viewModel.isFlipped
         let topIsWhite = flipped
         let bottomIsWhite = !flipped
+        let showEvalBar = !isFENMode || showEngineHints
 
         return HStack(spacing: 0) {
+            // Left: Board column — vertically centered
             VStack(spacing: 0) {
+                Spacer(minLength: 0)
+
                 playerHeader(
                     name: topIsWhite ? viewModel.displayWhiteName : viewModel.displayBlackName,
                     isWhite: topIsWhite,
@@ -334,19 +345,48 @@ struct AnalysisView: View {
                         ? viewModel.analysisEngine.gameAnalysis?.whiteAccuracy
                         : viewModel.analysisEngine.gameAnalysis?.blackAccuracy
                 )
+                .padding(.horizontal, AppSpacing.sm)
+
                 HStack(spacing: 0) {
-                    EvalBarView(eval: viewModel.currentEval, sideToMoveIsWhite: evalSideIsWhite).frame(height: boardSize)
-                    InteractiveBoardView(
-                        board: viewModel.displayBoard,
-                        selectedSquare: viewModel.selectedSquare,
-                        legalMoveTargets: viewModel.legalMoveTargets,
-                        lastMove: displayLastMove,
-                        arrows: boardArrows,
-                        moveClassification: viewModel.currentMoveAnalysis?.classification,
-                        flipped: viewModel.isFlipped,
-                        onTapSquare: { viewModel.tapSquare($0) }
-                    ).frame(width: boardSize, height: boardSize)
+                    if showEvalBar {
+                        EvalBarView(eval: viewModel.currentEval, sideToMoveIsWhite: evalSideIsWhite)
+                            .frame(height: boardSize)
+                    }
+
+                    ZStack {
+                        InteractiveBoardView(
+                            board: viewModel.displayBoard,
+                            selectedSquare: viewModel.selectedSquare,
+                            legalMoveTargets: viewModel.legalMoveTargets,
+                            lastMove: displayLastMove,
+                            arrows: boardArrows,
+                            moveClassification: displayClassification,
+                            showCoordinates: appState.engineConfig.showBoardCoordinates,
+                            flipped: viewModel.isFlipped,
+                            onTapSquare: { viewModel.tapSquare($0) }
+                        )
+
+                        if viewModel.showPromotionPicker {
+                            PromotionPickerView(
+                                color: viewModel.displayBoard.sideToMove,
+                                onSelect: { viewModel.completePromotion(piece: $0) }
+                            )
+                        }
+
+                        if let endStatus = viewModel.boardGameEndStatus {
+                            gameEndOverlay(endStatus)
+                        }
+                    }
+                    .frame(width: boardSize, height: boardSize)
+                    .gesture(
+                        DragGesture(minimumDistance: 30)
+                            .onEnded { value in
+                                if value.translation.width < -30 { viewModel.goForward() }
+                                else if value.translation.width > 30 { viewModel.goBack() }
+                            }
+                    )
                 }
+
                 playerHeader(
                     name: bottomIsWhite ? viewModel.displayWhiteName : viewModel.displayBlackName,
                     isWhite: bottomIsWhite,
@@ -354,6 +394,8 @@ struct AnalysisView: View {
                         ? viewModel.analysisEngine.gameAnalysis?.whiteAccuracy
                         : viewModel.analysisEngine.gameAnalysis?.blackAccuracy
                 )
+                .padding(.horizontal, AppSpacing.sm)
+
                 AnalysisControlsView(
                     isFlipped: viewModel.isFlipped,
                     isAtStart: !viewModel.canGoBack,
@@ -369,35 +411,71 @@ struct AnalysisView: View {
                     onFlipBoard: { viewModel.isFlipped.toggle() },
                     onReEvaluate: { viewModel.reEvaluate(config: appState.engineConfig) }
                 )
-            }
-            .padding(AppSpacing.md)
+                .padding(.vertical, AppSpacing.xs)
 
-            // Right panel
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, AppSpacing.sm)
+
+            // Right: Info panel
             VStack(spacing: 0) {
+                // Classification summary
                 if !viewModel.analysisEngine.cache.isEmpty {
                     ClassificationSummaryView(
                         cache: viewModel.analysisEngine.cache,
                         currentMoveIndex: viewModel.gameState.currentMoveIndex,
                         onNavigateToMove: { viewModel.gameState.goToMove($0) }
                     )
+                    .padding(.horizontal, AppSpacing.sm)
+                    .padding(.top, AppSpacing.sm)
                 }
 
-                MoveListView(
-                    moves: viewModel.gameState.game?.moves ?? [],
-                    analysisCache: viewModel.analysisEngine.cache,
-                    currentMoveIndex: viewModel.gameState.currentMoveIndex,
-                    onTapMove: { viewModel.gameState.goToMove($0) }
-                )
+                // Move explanation + eval
+                compactInfoBar
+                    .padding(.horizontal, AppSpacing.sm)
+                    .padding(.top, AppSpacing.sm)
 
-                compactInfoBar.padding(AppSpacing.sm)
-
+                // Progress
                 if viewModel.analysisEngine.progress.isAnalyzing {
-                    analysisProgressBar.padding(.horizontal, AppSpacing.sm)
+                    analysisProgressBar
+                        .padding(.horizontal, AppSpacing.sm)
+                        .padding(.top, AppSpacing.xs)
                 }
 
-                Spacer()
+                // Engine lines
+                engineLinesPanel
+                    .padding(.horizontal, AppSpacing.sm)
+                    .padding(.top, AppSpacing.sm)
+
+                // Variation moves (when exploring)
+                iPadVariationBar
+                    .padding(.horizontal, AppSpacing.sm)
+
+                Divider()
+                    .background(AppColors.surfaceLight)
+                    .padding(.vertical, AppSpacing.sm)
+
+                // Moves header
+                Text("Moves")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(AppColors.textMuted)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, AppSpacing.md)
+
+                // Move list — fills all remaining space, only this scrolls
+                ScrollView {
+                    MoveListView(
+                        moves: viewModel.gameState.game?.moves ?? [],
+                        analysisCache: viewModel.analysisEngine.cache,
+                        currentMoveIndex: viewModel.gameState.currentMoveIndex,
+                        onTapMove: { viewModel.gameState.goToMove($0) },
+                        vertical: true
+                    )
+                    .padding(.horizontal, AppSpacing.sm)
+                    .padding(.vertical, AppSpacing.xs)
+                }
             }
-            .frame(maxWidth: 350)
+            .frame(maxWidth: .infinity)
             .background(AppColors.surface)
         }
     }
@@ -406,7 +484,20 @@ struct AnalysisView: View {
 
     private var compactInfoBar: some View {
         Group {
-            if let analysis = viewModel.currentMoveAnalysis, analysis.classification != .none {
+            if let endStatus = viewModel.boardGameEndStatus {
+                HStack(spacing: AppSpacing.sm) {
+                    Image(systemName: "flag.checkered")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(AppColors.accent)
+                    Text(endStatus.displayText)
+                        .font(AppFonts.bodyBold)
+                        .foregroundStyle(AppColors.textPrimary)
+                    Spacer()
+                }
+                .padding(AppSpacing.md)
+                .background(AppColors.surface)
+                .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
+            } else if let analysis = viewModel.currentMoveAnalysis, analysis.classification != .none {
                 Button { showEngineDetail = true } label: {
                     HStack(spacing: AppSpacing.sm) {
                         Image(systemName: analysis.classification.iconName)
@@ -684,9 +775,92 @@ struct AnalysisView: View {
         return AppColors.textSecondary
     }
 
+    private func gameEndOverlay(_ status: AnalysisViewModel.GameEndStatus) -> some View {
+        VStack(spacing: AppSpacing.sm) {
+            Image(systemName: status.isCheckmate ? "crown.fill" : "equal.circle.fill")
+                .font(.system(size: 36))
+                .foregroundStyle(status.isCheckmate ? AppColors.accent : AppColors.textSecondary)
+
+            Text(status.displayText)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(.white)
+                .multilineTextAlignment(.center)
+        }
+        .padding(AppSpacing.xl)
+        .background(.black.opacity(0.7))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .transition(.opacity)
+        .allowsHitTesting(false)
+    }
+
     private var analysisProgressBar: some View {
         ProgressView(value: viewModel.analysisEngine.progress.percentage)
             .tint(AppColors.accent)
+    }
+
+    private var iPadVariationBar: some View {
+        Group {
+            let variationMoves = viewModel.displayVariationMoves
+            if !variationMoves.isEmpty || viewModel.isExploring {
+                VStack(spacing: AppSpacing.xs) {
+                    HStack {
+                        Image(systemName: "arrow.triangle.branch")
+                            .font(.system(size: 12))
+                            .foregroundStyle(AppColors.accent)
+                        Text("Variation")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(AppColors.textSecondary)
+                        Spacer()
+                        if viewModel.isExploring && hasLoadedGame {
+                            Button { viewModel.exitExploration() } label: {
+                                Text("Resume")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, AppSpacing.sm)
+                                    .padding(.vertical, 3)
+                                    .background(AppColors.accent)
+                                    .clipShape(Capsule())
+                            }
+                        }
+                    }
+
+                    if !variationMoves.isEmpty {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 2) {
+                                ForEach(variationMoves) { move in
+                                    if move.isWhite {
+                                        Text("\(move.moveNumber).")
+                                            .font(AppFonts.caption)
+                                            .foregroundStyle(AppColors.textMuted)
+                                    }
+                                    let isCurrent = viewModel.isExploring
+                                        && move.moveIndex == viewModel.explorationViewIndex
+                                    Button {
+                                        viewModel.goToExplorationMove(move.moveIndex)
+                                    } label: {
+                                        Text(move.san)
+                                            .font(AppFonts.moveText)
+                                            .foregroundStyle(isCurrent ? AppColors.background : AppColors.textPrimary)
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 3)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 4)
+                                                    .fill(isCurrent ? AppColors.accent : Color.clear)
+                                            )
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                        }
+                        .frame(height: 28)
+                    }
+                }
+                .padding(AppSpacing.sm)
+                .background(AppColors.surfaceLight.opacity(0.3))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .padding(.top, AppSpacing.sm)
+            }
+        }
     }
 
     private var analysisOverlay: some View {
@@ -740,9 +914,13 @@ struct AnalysisView: View {
 
     private var displayLastMove: (from: String, to: String)? {
         if viewModel.isExploring {
-            if let move = viewModel.explorationMoves.last {
+            let idx = viewModel.explorationViewIndex
+            if idx >= 0 && idx < viewModel.explorationMoves.count {
+                let move = viewModel.explorationMoves[idx]
                 return (move.from, move.to)
             }
+            // At the branch point (before any variation move), show the game's current move
+            return viewModel.gameState.currentMove.map { ($0.from, $0.to) }
         }
         guard let move = viewModel.gameState.currentMove else { return nil }
         return (move.from, move.to)

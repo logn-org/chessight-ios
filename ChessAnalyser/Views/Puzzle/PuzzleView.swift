@@ -107,117 +107,185 @@ struct PuzzleView: View {
     private var puzzleContent: some View {
         GeometryReader { geometry in
             let screenWidth = geometry.size.width
-            let boardSize = screenWidth - AppSpacing.sm * 2
+            let isIPad = AppSpacing.isIPad(screenWidth)
+            let boardSize = isIPad
+                ? AppSpacing.boardSize(for: screenWidth, screenHeight: geometry.size.height)
+                : max(1, screenWidth - AppSpacing.sm * 2)
 
-            VStack(spacing: 0) {
-                // Title
-                if let puzzle = viewModel.puzzle {
-                    Text(puzzle.title)
-                        .font(AppFonts.subtitle)
-                        .foregroundStyle(AppColors.textPrimary)
-                        .lineLimit(1)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, AppSpacing.md)
-                        .frame(height: 28)
+            if isIPad {
+                HStack(alignment: .top, spacing: AppSpacing.lg) {
+                    // Left: Board
+                    VStack(spacing: 0) {
+                        puzzleBoardSection(boardSize: boardSize)
+                    }
+                    .frame(width: boardSize + AppSpacing.sm * 2)
+
+                    // Right: Controls panel
+                    VStack(spacing: AppSpacing.md) {
+                        puzzleInfoAndControls
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, AppSpacing.md)
                 }
+            } else {
+                VStack(spacing: 0) {
+                    // Title
+                    if let puzzle = viewModel.puzzle {
+                        Text(puzzle.title)
+                            .font(AppFonts.subtitle)
+                            .foregroundStyle(AppColors.textPrimary)
+                            .lineLimit(1)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, AppSpacing.md)
+                            .frame(height: 28)
+                    }
 
-                // Status bar
-                statusBar
+                    // Status bar
+                    statusBar
 
-                // Board
-                InteractiveBoardView(
-                    board: viewModel.board,
-                    selectedSquare: viewModel.selectedSquare,
-                    legalMoveTargets: viewModel.legalMoveTargets,
-                    lastMove: lastMove,
-                    arrows: hintArrows,
-                    showCoordinates: appState.engineConfig.showBoardCoordinates,
-                    flipped: viewModel.isFlipped,
-                    onTapSquare: { viewModel.tapSquare($0) }
-                )
-                .frame(width: boardSize, height: boardSize)
+                    puzzleBoardSection(boardSize: boardSize)
+
+                    // Move history
+                    puzzleMoveHistory
+
+                    // Controls
+                    puzzleControlButtons
+
+                    // Chess.com credit
+                    puzzleCredit
+
+                    Spacer()
+                }
+            }
+        }
+    }
+
+    // MARK: - Puzzle Subviews
+
+    private func puzzleBoardSection(boardSize: CGFloat) -> some View {
+        InteractiveBoardView(
+            board: viewModel.board,
+            selectedSquare: viewModel.selectedSquare,
+            legalMoveTargets: viewModel.legalMoveTargets,
+            lastMove: lastMove,
+            arrows: hintArrows,
+            showCoordinates: appState.engineConfig.showBoardCoordinates,
+            flipped: viewModel.isFlipped,
+            onTapSquare: { viewModel.tapSquare($0) }
+        )
+        .frame(width: boardSize, height: boardSize)
+        .padding(.horizontal, AppSpacing.sm)
+        .overlay(
+            RoundedRectangle(cornerRadius: AppSpacing.cornerRadiusSm)
+                .stroke(viewModel.wrongMove ? AppColors.blunder : Color.clear, lineWidth: 3)
                 .padding(.horizontal, AppSpacing.sm)
-                .overlay(
-                    RoundedRectangle(cornerRadius: AppSpacing.cornerRadiusSm)
-                        .stroke(viewModel.wrongMove ? AppColors.blunder : Color.clear, lineWidth: 3)
-                        .padding(.horizontal, AppSpacing.sm)
-                        .animation(.easeInOut(duration: 0.3), value: viewModel.wrongMove)
-                )
+                .animation(.easeInOut(duration: 0.3), value: viewModel.wrongMove)
+        )
+    }
 
-                // Move history
-                if !viewModel.userMoves.isEmpty {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 2) {
-                            ForEach(viewModel.userMoves) { move in
-                                if move.isWhite {
-                                    Text("\(move.moveNumber).")
-                                        .font(AppFonts.caption)
-                                        .foregroundStyle(AppColors.textMuted)
-                                }
-                                Text(move.san)
-                                    .font(AppFonts.moveText)
-                                    .foregroundStyle(AppColors.textPrimary)
-                                    .padding(.horizontal, 3)
+    private var puzzleInfoAndControls: some View {
+        VStack(spacing: AppSpacing.md) {
+            // Title
+            if let puzzle = viewModel.puzzle {
+                Text(puzzle.title)
+                    .font(AppFonts.subtitle)
+                    .foregroundStyle(AppColors.textPrimary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            // Status bar
+            statusBar
+
+            // Move history
+            puzzleMoveHistory
+
+            // Controls
+            puzzleControlButtons
+
+            // Chess.com credit
+            puzzleCredit
+        }
+    }
+
+    private var puzzleMoveHistory: some View {
+        Group {
+            if !viewModel.userMoves.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 2) {
+                        ForEach(viewModel.userMoves) { move in
+                            if move.isWhite {
+                                Text("\(move.moveNumber).")
+                                    .font(AppFonts.caption)
+                                    .foregroundStyle(AppColors.textMuted)
                             }
+                            Text(move.san)
+                                .font(AppFonts.moveText)
+                                .foregroundStyle(AppColors.textPrimary)
+                                .padding(.horizontal, 3)
                         }
-                        .padding(.horizontal, AppSpacing.sm)
                     }
-                    .frame(height: 30)
-                    .background(AppColors.surface)
-                    .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadiusSm))
                     .padding(.horizontal, AppSpacing.sm)
-                    .padding(.top, AppSpacing.xs)
                 }
+                .frame(height: 30)
+                .background(AppColors.surface)
+                .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadiusSm))
+                .padding(.horizontal, AppSpacing.sm)
+                .padding(.top, AppSpacing.xs)
+            }
+        }
+    }
 
-                // Controls
-                HStack(spacing: AppSpacing.lg) {
-                    Button { viewModel.isFlipped.toggle() } label: {
-                        Image(systemName: "arrow.up.arrow.down")
-                    }
+    private var puzzleControlButtons: some View {
+        HStack(spacing: AppSpacing.lg) {
+            Button { viewModel.isFlipped.toggle() } label: {
+                Image(systemName: "arrow.up.arrow.down")
+            }
 
-                    Button { viewModel.resetPuzzle(); showHint = false; hintMoveUCI = nil } label: {
-                        Image(systemName: "arrow.counterclockwise")
-                    }
+            Button { viewModel.resetPuzzle(); showHint = false; hintMoveUCI = nil } label: {
+                Image(systemName: "arrow.counterclockwise")
+            }
 
-                    // Hint / show engine move
-                    Button { toggleHint() } label: {
-                        Image(systemName: showHint ? "lightbulb.fill" : "lightbulb")
-                            .foregroundStyle(showHint ? AppColors.accent : AppColors.textPrimary)
-                    }
+            // Hint / show engine move
+            Button { toggleHint() } label: {
+                Image(systemName: showHint ? "lightbulb.fill" : "lightbulb")
+                    .foregroundStyle(showHint ? AppColors.accent : AppColors.textPrimary)
+            }
 
-                    Button {
-                        mode = .random
-                        showHint = false
-                        hintMoveUCI = nil
-                        loadPuzzle()
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "shuffle")
-                            Text("Next")
-                                .font(AppFonts.captionBold)
-                        }
-                        .foregroundStyle(AppColors.accent)
+            Button {
+                mode = .random
+                showHint = false
+                hintMoveUCI = nil
+                loadPuzzle()
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "shuffle")
+                    Text("Next")
+                        .font(AppFonts.captionBold)
+                }
+                .foregroundStyle(AppColors.accent)
+            }
+        }
+        .font(.title3)
+        .foregroundStyle(AppColors.textPrimary)
+        .padding(.vertical, AppSpacing.sm)
+    }
+
+    private var puzzleCredit: some View {
+        Group {
+            if let puzzle = viewModel.puzzle {
+                Link(destination: URL(string: puzzle.url) ?? URL(string: "https://chess.com") ?? URL(fileURLWithPath: "/")) {
+                    HStack(spacing: AppSpacing.xs) {
+                        Text("Puzzle by")
+                            .font(AppFonts.small)
+                            .foregroundStyle(AppColors.textMuted)
+                        Text("Chess.com")
+                            .font(AppFonts.captionBold)
+                            .foregroundStyle(AppColors.accent)
                     }
                 }
-                .font(.title3)
-                .foregroundStyle(AppColors.textPrimary)
-                .padding(.vertical, AppSpacing.sm)
-
-                // Chess.com credit
-                if let puzzle = viewModel.puzzle {
-                    Link(destination: URL(string: puzzle.url) ?? URL(string: "https://chess.com")  ?? URL(fileURLWithPath: "/")) {
-                        HStack(spacing: AppSpacing.xs) {
-                            Text("Puzzle by")
-                                .font(AppFonts.small)
-                                .foregroundStyle(AppColors.textMuted)
-                            Text("Chess.com")
-                                .font(AppFonts.captionBold)
-                                .foregroundStyle(AppColors.accent)
-                        }
-                    }
-                }
-
-                Spacer()
             }
         }
     }

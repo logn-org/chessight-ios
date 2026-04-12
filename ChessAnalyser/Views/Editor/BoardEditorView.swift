@@ -14,162 +14,65 @@ struct BoardEditorView: View {
     var body: some View {
         GeometryReader { geometry in
             let screenWidth = geometry.size.width
-            let boardSize = screenWidth - AppSpacing.sm * 2
+            let isIPad = AppSpacing.isIPad(screenWidth)
+            let boardSize = isIPad
+                ? AppSpacing.boardSize(for: screenWidth, screenHeight: geometry.size.height)
+                : max(1, screenWidth - AppSpacing.sm * 2)
 
-            VStack(spacing: AppSpacing.sm) {
-                // Mode selector
-                modeSelector
-
-                // Board
-                EditorBoardView(
-                    board: viewModel.board,
-                    pickedUpSquare: viewModel.pickedUpSquare,
-                    editorMode: viewModel.editorMode,
-                    flipped: viewModel.isFlipped,
-                    onTapSquare: { viewModel.tapSquare($0) },
-                    onDragMove: { from, to in viewModel.dragMove(from: from, to: to) }
-                )
-                .frame(width: boardSize, height: boardSize)
-                .padding(.horizontal, AppSpacing.sm)
-
-                // Piece palettes (only in place mode)
-                if viewModel.editorMode == .place {
-                    piecePalette(pieces: viewModel.whitePieces)
-                    piecePalette(pieces: viewModel.blackPieces)
-                }
-
-                // Action buttons row 1
-                HStack(spacing: AppSpacing.sm) {
-                    // Side to move (clear label)
-                    Button { viewModel.toggleSideToMove() } label: {
-                        HStack(spacing: 4) {
-                            Circle()
-                                .fill(viewModel.sideToMove == .white ? Color.white : Color.black)
-                                .frame(width: 14, height: 14)
-                                .overlay(Circle().stroke(AppColors.surfaceLight, lineWidth: 1))
-                            Text("\(viewModel.sideToMove == .white ? "White" : "Black") to move")
-                                .font(AppFonts.captionBold)
-                        }
+            if isIPad {
+                HStack(alignment: .top, spacing: AppSpacing.lg) {
+                    // Left: Board
+                    VStack(spacing: AppSpacing.sm) {
+                        EditorBoardView(
+                            board: viewModel.board,
+                            pickedUpSquare: viewModel.pickedUpSquare,
+                            editorMode: viewModel.editorMode,
+                            flipped: viewModel.isFlipped,
+                            onTapSquare: { viewModel.tapSquare($0) },
+                            onDragMove: { from, to in viewModel.dragMove(from: from, to: to) }
+                        )
+                        .frame(width: boardSize, height: boardSize)
                         .padding(.horizontal, AppSpacing.sm)
-                        .padding(.vertical, AppSpacing.sm)
-                        .background(AppColors.surface)
-                        .clipShape(Capsule())
                     }
+                    .frame(width: boardSize + AppSpacing.sm * 2)
 
-                    // Undo
-                    Button { viewModel.undo() } label: {
-                        Image(systemName: "arrow.uturn.backward")
-                            .padding(.horizontal, AppSpacing.sm)
-                            .padding(.vertical, AppSpacing.sm)
-                            .background(AppColors.surface)
-                            .clipShape(Capsule())
+                    // Right: Controls panel
+                    ScrollView {
+                        VStack(spacing: AppSpacing.md) {
+                            editorModeSelector
+                            editorPiecePalettes
+                            editorActionButtons
+                            editorFENBar
+                            editorPlayButtons
+                        }
+                        .padding(.top, AppSpacing.md)
                     }
-                    .disabled(!viewModel.canUndo)
-                    .opacity(viewModel.canUndo ? 1 : 0.4)
-
-                    // Flip
-                    Button { viewModel.isFlipped.toggle() } label: {
-                        Image(systemName: "arrow.up.arrow.down")
-                            .padding(.horizontal, AppSpacing.sm)
-                            .padding(.vertical, AppSpacing.sm)
-                            .background(AppColors.surface)
-                            .clipShape(Capsule())
-                    }
-
-                    // Clear
-                    Button { viewModel.clearBoard() } label: {
-                        Image(systemName: "trash")
-                            .padding(.horizontal, AppSpacing.sm)
-                            .padding(.vertical, AppSpacing.sm)
-                            .background(AppColors.surface)
-                            .clipShape(Capsule())
-                    }
-
-                    // Reset
-                    Button { viewModel.resetToDefault() } label: {
-                        Image(systemName: "arrow.counterclockwise")
-                            .padding(.horizontal, AppSpacing.sm)
-                            .padding(.vertical, AppSpacing.sm)
-                            .background(AppColors.surface)
-                            .clipShape(Capsule())
-                    }
+                    .frame(maxWidth: .infinity)
                 }
-                .font(AppFonts.captionBold)
-                .foregroundStyle(AppColors.textPrimary)
+            } else {
+                VStack(spacing: AppSpacing.sm) {
+                    // Mode selector
+                    modeSelector
 
-                // FEN display + copy/paste
-                HStack(spacing: AppSpacing.sm) {
-                    Text(viewModel.currentFEN)
-                        .font(AppFonts.small)
-                        .foregroundStyle(AppColors.textMuted)
-                        .lineLimit(1)
+                    // Board
+                    EditorBoardView(
+                        board: viewModel.board,
+                        pickedUpSquare: viewModel.pickedUpSquare,
+                        editorMode: viewModel.editorMode,
+                        flipped: viewModel.isFlipped,
+                        onTapSquare: { viewModel.tapSquare($0) },
+                        onDragMove: { from, to in viewModel.dragMove(from: from, to: to) }
+                    )
+                    .frame(width: boardSize, height: boardSize)
+                    .padding(.horizontal, AppSpacing.sm)
+
+                    editorPiecePalettes
+                    editorActionButtons
+                    editorFENBar
+                    editorPlayButtons
+
                     Spacer()
-                    Button {
-                        showFENInput = true
-                        fenInput = ""
-                    } label: {
-                        Image(systemName: "square.and.arrow.down")
-                            .font(AppFonts.caption)
-                            .foregroundStyle(AppColors.accent)
-                    }
-                    Button {
-                        UIPasteboard.general.string = viewModel.currentFEN
-                    } label: {
-                        Image(systemName: "doc.on.doc")
-                            .font(AppFonts.caption)
-                            .foregroundStyle(AppColors.accent)
-                    }
                 }
-                .padding(.horizontal, AppSpacing.md)
-
-                // Play buttons + info
-                HStack(spacing: AppSpacing.sm) {
-                    Button {
-                        if let error = viewModel.validatePosition() {
-                            validationError = error
-                        } else {
-                            fenToPlay = viewModel.currentFEN
-                            navigateToFreePlay = true
-                        }
-                    } label: {
-                        Label("Free Play", systemImage: "play.fill")
-                            .font(AppFonts.captionBold)
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, AppSpacing.md)
-                            .background(AppColors.accent)
-                            .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
-                    }
-
-                    Button {
-                        if let error = viewModel.validatePosition() {
-                            validationError = error
-                        } else {
-                            fenToPlay = viewModel.currentFEN
-                            navigateToBotGame = true
-                        }
-                    } label: {
-                        Label("vs Bot", systemImage: "cpu")
-                            .font(AppFonts.captionBold)
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, AppSpacing.md)
-                            .background(AppColors.great)
-                            .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
-                    }
-
-                    Button { showRules = true } label: {
-                        Image(systemName: "info.circle")
-                            .font(.title3)
-                            .foregroundStyle(AppColors.textMuted)
-                            .padding(AppSpacing.md)
-                            .background(AppColors.surface)
-                            .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
-                    }
-                }
-                .padding(.horizontal, AppSpacing.md)
-
-                Spacer()
             }
         }
         .background(AppColors.background)
@@ -260,6 +163,150 @@ struct BoardEditorView: View {
             }
         }
         .presentationDetents([.medium])
+    }
+
+    // MARK: - Extracted Subviews
+
+    private var editorModeSelector: some View {
+        modeSelector
+    }
+
+    private var editorPiecePalettes: some View {
+        Group {
+            if viewModel.editorMode == .place {
+                piecePalette(pieces: viewModel.whitePieces)
+                piecePalette(pieces: viewModel.blackPieces)
+            }
+        }
+    }
+
+    private var editorActionButtons: some View {
+        HStack(spacing: AppSpacing.sm) {
+            Button { viewModel.toggleSideToMove() } label: {
+                HStack(spacing: 4) {
+                    Circle()
+                        .fill(viewModel.sideToMove == .white ? Color.white : Color.black)
+                        .frame(width: 14, height: 14)
+                        .overlay(Circle().stroke(AppColors.surfaceLight, lineWidth: 1))
+                    Text("\(viewModel.sideToMove == .white ? "White" : "Black") to move")
+                        .font(AppFonts.captionBold)
+                }
+                .padding(.horizontal, AppSpacing.sm)
+                .padding(.vertical, AppSpacing.sm)
+                .background(AppColors.surface)
+                .clipShape(Capsule())
+            }
+
+            Button { viewModel.undo() } label: {
+                Image(systemName: "arrow.uturn.backward")
+                    .padding(.horizontal, AppSpacing.sm)
+                    .padding(.vertical, AppSpacing.sm)
+                    .background(AppColors.surface)
+                    .clipShape(Capsule())
+            }
+            .disabled(!viewModel.canUndo)
+            .opacity(viewModel.canUndo ? 1 : 0.4)
+
+            Button { viewModel.isFlipped.toggle() } label: {
+                Image(systemName: "arrow.up.arrow.down")
+                    .padding(.horizontal, AppSpacing.sm)
+                    .padding(.vertical, AppSpacing.sm)
+                    .background(AppColors.surface)
+                    .clipShape(Capsule())
+            }
+
+            Button { viewModel.clearBoard() } label: {
+                Image(systemName: "trash")
+                    .padding(.horizontal, AppSpacing.sm)
+                    .padding(.vertical, AppSpacing.sm)
+                    .background(AppColors.surface)
+                    .clipShape(Capsule())
+            }
+
+            Button { viewModel.resetToDefault() } label: {
+                Image(systemName: "arrow.counterclockwise")
+                    .padding(.horizontal, AppSpacing.sm)
+                    .padding(.vertical, AppSpacing.sm)
+                    .background(AppColors.surface)
+                    .clipShape(Capsule())
+            }
+        }
+        .font(AppFonts.captionBold)
+        .foregroundStyle(AppColors.textPrimary)
+    }
+
+    private var editorFENBar: some View {
+        HStack(spacing: AppSpacing.sm) {
+            Text(viewModel.currentFEN)
+                .font(AppFonts.small)
+                .foregroundStyle(AppColors.textMuted)
+                .lineLimit(1)
+            Spacer()
+            Button {
+                showFENInput = true
+                fenInput = ""
+            } label: {
+                Image(systemName: "square.and.arrow.down")
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.accent)
+            }
+            Button {
+                UIPasteboard.general.string = viewModel.currentFEN
+            } label: {
+                Image(systemName: "doc.on.doc")
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.accent)
+            }
+        }
+        .padding(.horizontal, AppSpacing.md)
+    }
+
+    private var editorPlayButtons: some View {
+        HStack(spacing: AppSpacing.sm) {
+            Button {
+                if let error = viewModel.validatePosition() {
+                    validationError = error
+                } else {
+                    fenToPlay = viewModel.currentFEN
+                    navigateToFreePlay = true
+                }
+            } label: {
+                Label("Free Play", systemImage: "play.fill")
+                    .font(AppFonts.captionBold)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, AppSpacing.md)
+                    .background(AppColors.accent)
+                    .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
+            }
+
+            Button {
+                if let error = viewModel.validatePosition() {
+                    validationError = error
+                } else {
+                    fenToPlay = viewModel.currentFEN
+                    navigateToBotGame = true
+                }
+            } label: {
+                Label("vs Bot", systemImage: "cpu")
+                    .font(AppFonts.captionBold)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, AppSpacing.md)
+                    .background(AppColors.great)
+                    .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
+            }
+
+            Button { showRules = true } label: {
+                Image(systemName: "info.circle")
+                    .font(.title3)
+                    .foregroundStyle(AppColors.textMuted)
+                    .padding(AppSpacing.md)
+                    .background(AppColors.surface)
+                    .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
+            }
+        }
+        .padding(.horizontal, AppSpacing.md)
     }
 
     // MARK: - Mode Selector

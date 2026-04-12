@@ -217,8 +217,10 @@ struct MoveClassifier {
         isWhite: Bool
     ) -> MoveClassification {
         // Subjective values (from the moving side's perspective)
+        // evalBefore: side to move = the player who moved (isWhite)
+        // evalAfter: side to move = the OPPONENT (!isWhite) — negate to get moving side's perspective
         let subjectiveBefore = subjectiveValue(evalBefore, isWhite: isWhite)
-        let subjectiveAfter = subjectiveValue(evalAfter, isWhite: isWhite)
+        let subjectiveAfter = subjectiveValue(evalAfter, isWhite: !isWhite)
 
         // === Mate-to-Mate transitions ===
         if evalBefore.isMate && evalAfter.isMate {
@@ -247,7 +249,8 @@ struct MoveClassifier {
         // === Mate-to-Centipawn transitions ===
         // Had a forced mate, now just a centipawn advantage — lost the mate
         if evalBefore.isMate && !evalAfter.isMate {
-            let cpAfter = isWhite ? evalAfter.score : -evalAfter.score
+            // evalAfter is from opponent's perspective, negate for moving side
+            let cpAfter = isWhite ? -evalAfter.score : evalAfter.score
             if cpAfter >= 800 { return .excellent }
             if cpAfter >= 400 { return .ok }
             if cpAfter >= 200 { return .inaccuracy }

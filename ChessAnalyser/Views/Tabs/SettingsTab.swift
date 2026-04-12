@@ -150,6 +150,8 @@ struct SettingsTab: View {
             }
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
+            .frame(maxWidth: 700)
+            .frame(maxWidth: .infinity)
             .background(AppColors.background)
             .navigationTitle("Settings")
             .toolbarColorScheme(.dark, for: .navigationBar)
