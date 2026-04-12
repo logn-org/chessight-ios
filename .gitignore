@@ -1,0 +1,39 @@
+# Xcode
+ChessAnalyser.xcodeproj/
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcuserdatad/
+*.xcscmblueprint
+*.xccheckout
+
+# macOS
+.DS_Store
+*.swp
+*~
+
+# Firebase (contains API keys)
+GoogleService-Info.plist
+
+# Stockfish NNUE models (large binaries — download separately)
+*.nnue
+
+# SPM
+.build/
+Packages/
+
+# Archives & build artifacts
+*.ipa
+*.dSYM
+*.dSYM.zip
+*.xcarchive
+
+# CocoaPods (not used, but just in case)
+Pods/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
