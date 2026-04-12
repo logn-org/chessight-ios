@@ -8,6 +8,8 @@ struct BoardEditorView: View {
     @State private var fenToPlay = ""
     @State private var validationError: String?
     @State private var showRules = false
+    @State private var showFENInput = false
+    @State private var fenInput = ""
 
     var body: some View {
         GeometryReader { geometry in
@@ -95,13 +97,21 @@ struct BoardEditorView: View {
                 .font(AppFonts.captionBold)
                 .foregroundStyle(AppColors.textPrimary)
 
-                // FEN display
-                HStack {
+                // FEN display + copy/paste
+                HStack(spacing: AppSpacing.sm) {
                     Text(viewModel.currentFEN)
                         .font(AppFonts.small)
                         .foregroundStyle(AppColors.textMuted)
                         .lineLimit(1)
                     Spacer()
+                    Button {
+                        showFENInput = true
+                        fenInput = ""
+                    } label: {
+                        Image(systemName: "square.and.arrow.down")
+                            .font(AppFonts.caption)
+                            .foregroundStyle(AppColors.accent)
+                    }
                     Button {
                         UIPasteboard.general.string = viewModel.currentFEN
                     } label: {
@@ -183,6 +193,73 @@ struct BoardEditorView: View {
         } message: {
             Text(validationError ?? "")
         }
+        .sheet(isPresented: $showFENInput) {
+            fenInputSheet
+        }
+    }
+
+    // MARK: - FEN Input Sheet
+
+    private var fenInputSheet: some View {
+        NavigationStack {
+            VStack(spacing: AppSpacing.lg) {
+                Text("Paste a FEN string to load a position onto the board.")
+                    .font(AppFonts.body)
+                    .foregroundStyle(AppColors.textSecondary)
+                    .padding(.horizontal, AppSpacing.md)
+
+                TextField("Paste FEN here...", text: $fenInput, axis: .vertical)
+                    .font(.system(size: 14, design: .monospaced))
+                    .foregroundStyle(AppColors.textPrimary)
+                    .padding(AppSpacing.md)
+                    .background(AppColors.surface)
+                    .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
+                    .lineLimit(3)
+                    .padding(.horizontal, AppSpacing.md)
+
+                Button {
+                    if let clipboard = UIPasteboard.general.string, !clipboard.isEmpty {
+                        fenInput = clipboard
+                    }
+                } label: {
+                    Label("Paste from Clipboard", systemImage: "doc.on.clipboard")
+                        .font(AppFonts.captionBold)
+                        .foregroundStyle(AppColors.accent)
+                }
+
+                Spacer()
+
+                Button {
+                    if let error = viewModel.loadFEN(fenInput) {
+                        validationError = error
+                    }
+                    showFENInput = false
+                } label: {
+                    Text("Load Position")
+                        .font(AppFonts.subtitle)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, AppSpacing.md)
+                        .background(fenInput.isEmpty ? AppColors.surfaceLight : AppColors.accent)
+                        .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
+                }
+                .disabled(fenInput.isEmpty)
+                .padding(.horizontal, AppSpacing.md)
+                .padding(.bottom, AppSpacing.md)
+            }
+            .padding(.top, AppSpacing.md)
+            .background(AppColors.background)
+            .navigationTitle("Import FEN")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") { showFENInput = false }
+                        .foregroundStyle(AppColors.accent)
+                }
+            }
+        }
+        .presentationDetents([.medium])
     }
 
     // MARK: - Mode Selector

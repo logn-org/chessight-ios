@@ -136,6 +136,31 @@ final class BoardEditorViewModel {
         pickedUpPiece = nil
     }
 
+    /// Load a position from a FEN string. Returns an error message if invalid.
+    func loadFEN(_ fen: String) -> String? {
+        let trimmed = fen.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return "FEN is empty" }
+
+        let parts = trimmed.split(separator: " ")
+        guard parts.count >= 1 else { return "Invalid FEN format" }
+
+        // Basic validation: first part should have 8 ranks separated by /
+        let ranks = parts[0].split(separator: "/")
+        guard ranks.count == 8 else { return "FEN must have 8 ranks separated by /" }
+
+        saveState()
+        board = ChessBoard(fen: trimmed)
+
+        // Set side to move from FEN
+        if parts.count >= 2 {
+            sideToMove = parts[1] == "b" ? .black : .white
+        }
+
+        pickedUpSquare = nil
+        pickedUpPiece = nil
+        return nil
+    }
+
     func toggleSideToMove() {
         sideToMove = sideToMove.opposite
         isFlipped = sideToMove == .black

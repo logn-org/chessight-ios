@@ -26,6 +26,7 @@ A native iOS chess analysis app built with SwiftUI and C++ Stockfish engine. Ana
 
 ### Other
 - **PGN import** — paste PGN text or import .pgn files
+- **FEN import** — paste FEN strings in the board editor to load any position
 - **Opening book** detection (~3600 positions)
 - **Piece sounds** and haptic feedback
 - **Dark theme** inspired by chess.com
