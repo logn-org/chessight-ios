@@ -135,6 +135,17 @@ struct SettingsTab: View {
                             .foregroundStyle(AppColors.textSecondary)
                     }
                     .listRowBackground(AppColors.surface)
+
+                    Link(destination: URL(string: "https://logn-org.github.io/policies/chessight/privacy-policy.html") ?? URL(fileURLWithPath: "/")) {
+                        HStack {
+                            Text("Privacy Policy")
+                                .foregroundStyle(AppColors.textPrimary)
+                            Spacer()
+                            Image(systemName: "arrow.up.right.square")
+                                .foregroundStyle(AppColors.accent)
+                        }
+                    }
+                    .listRowBackground(AppColors.surface)
                 }
             }
             .listStyle(.insetGrouped)
