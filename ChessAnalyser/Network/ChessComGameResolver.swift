@@ -2,8 +2,9 @@ import Foundation
 
 /// Resolves chess.com game links to PGN by:
 /// 1. Extracting game ID from URL
-/// 2. Calling chess.com callback API to get game metadata
-/// 3. Fetching the PGN from the player's game archive
+/// 2. Calling chess.com callback API to get game metadata + moveList
+/// 3. Decoding TCN moveList to generate PGN locally (fast, 1 API call)
+/// 4. Falls back to archive API if TCN decode fails
 actor ChessComGameResolver {
     private let session: URLSession
 
@@ -18,11 +19,7 @@ actor ChessComGameResolver {
     }
 
     /// Extract game ID from a chess.com URL.
-    /// Supports: https://www.chess.com/game/live/123456
-    ///           https://www.chess.com/game/daily/123456
-    ///           chess.com/game/live/123456
     static func extractGameId(from text: String) -> String? {
-        // Match chess.com game URLs
         let patterns = [
             #"chess\.com/game/(?:live|daily)/(\d+)"#,
             #"chess\.com/analysis/game/(?:live|daily)/(\d+)"#,
@@ -51,25 +48,56 @@ actor ChessComGameResolver {
         }
 
         let gameData = try JSONDecoder().decode(CallbackResponse.self, from: data)
+        let headers = gameData.game.pgnHeaders
 
-        let white = gameData.game.pgnHeaders.White
-        let black = gameData.game.pgnHeaders.Black
-        let date = gameData.game.pgnHeaders.Date  // "2026.04.09"
+        // Primary: decode TCN moveList locally (fast, no second API call)
+        if let moveList = gameData.game.moveList, !moveList.isEmpty {
+            let startFEN = headers.SetUp == "1" ? headers.FEN : nil
+            if let pgn = TCNDecoder.generatePGN(
+                tcn: moveList,
+                white: headers.White, black: headers.Black, date: headers.Date,
+                result: headers.Result, whiteElo: headers.WhiteElo, blackElo: headers.BlackElo,
+                timeControl: headers.TimeControl, eco: headers.ECO, startFEN: startFEN
+            ) {
+                // Validate the generated PGN
+                if PGNParser.validate(pgn) == nil {
+                    CrashLogger.logNetwork("TCN decode successful for game \(gameId)")
+                    return ResolvedGame(
+                        pgn: pgn,
+                        white: headers.White,
+                        black: headers.Black,
+                        whiteRating: headers.WhiteElo,
+                        blackRating: headers.BlackElo
+                    )
+                }
+                CrashLogger.logNetwork("TCN decode produced invalid PGN, falling back to archive")
+            }
+        }
+
+        // Fallback: fetch PGN from player's game archive (slow, 2nd API call)
+        CrashLogger.logNetwork("Falling back to archive API for game \(gameId)")
+        return try await resolveViaArchive(gameData: gameData, gameId: gameId)
+    }
+
+    // MARK: - Archive Fallback
+
+    private func resolveViaArchive(gameData: CallbackResponse, gameId: String) async throws -> ResolvedGame {
+        let headers = gameData.game.pgnHeaders
+        let white = headers.White
+        let black = headers.Black
+        let date = headers.Date
         let uuid = gameData.game.uuid
 
-        // Step 2: Parse date to get year/month for archive URL
         let parts = date.split(separator: ".")
         guard parts.count >= 2 else { throw GameResolveError.invalidData }
         let year = String(parts[0])
         let month = String(parts[1])
 
-        // Step 3: Fetch game archive for one of the players
         let archiveURL = "https://api.chess.com/pub/player/\(white.lowercased())/games/\(year)/\(month)"
         guard let url = URL(string: archiveURL) else { throw GameResolveError.invalidData }
         let (archiveData, archiveResponse) = try await session.data(from: url)
 
         guard let archiveHttp = archiveResponse as? HTTPURLResponse, archiveHttp.statusCode == 200 else {
-            // Try with black player if white fails
             return try await resolveWithPlayer(black, year: year, month: month, uuid: uuid, gameData: gameData)
         }
 
@@ -78,12 +106,11 @@ actor ChessComGameResolver {
                 pgn: pgn,
                 white: white,
                 black: black,
-                whiteRating: gameData.game.pgnHeaders.WhiteElo,
-                blackRating: gameData.game.pgnHeaders.BlackElo
+                whiteRating: headers.WhiteElo,
+                blackRating: headers.BlackElo
             )
         }
 
-        // Fallback: try other player
         return try await resolveWithPlayer(black, year: year, month: month, uuid: uuid, gameData: gameData)
     }
 
@@ -109,7 +136,6 @@ actor ChessComGameResolver {
         )
     }
 
-    /// Search archive games for matching UUID or game ID
     private func findPGNInArchive(data: Data, uuid: String, gameId: String) -> String? {
         struct ArchiveResponse: Decodable {
             let games: [ArchiveGame]
@@ -122,19 +148,17 @@ actor ChessComGameResolver {
 
         guard let archive = try? JSONDecoder().decode(ArchiveResponse.self, from: data) else { return nil }
 
-        // Match by UUID first
         if let game = archive.games.first(where: { $0.uuid == uuid }) {
             return game.pgn
         }
-
-        // Match by game ID in URL
         if let game = archive.games.first(where: { $0.url.contains(gameId) }) {
             return game.pgn
         }
-
         return nil
     }
 }
+
+// MARK: - Models
 
 struct ResolvedGame {
     let pgn: String
@@ -160,7 +184,7 @@ enum GameResolveError: Error, LocalizedError {
     }
 }
 
-// MARK: - API Response Models
+// MARK: - Callback API Response
 
 private struct CallbackResponse: Decodable {
     let game: GameInfo
@@ -168,6 +192,7 @@ private struct CallbackResponse: Decodable {
     struct GameInfo: Decodable {
         let id: Int
         let uuid: String
+        let moveList: String?
         let pgnHeaders: PGNHeaders
     }
 
@@ -179,5 +204,134 @@ private struct CallbackResponse: Decodable {
         let WhiteElo: Int?
         let BlackElo: Int?
         let TimeControl: String?
+        let ECO: String?
+        let SetUp: String?
+        let FEN: String?
+    }
+}
+
+// MARK: - TCN Decoder
+
+/// Decodes chess.com's TCN (Ternary Chess Notation) move encoding.
+/// Port of the chess-tcn npm library used by chess.com.
+enum TCNDecoder {
+    private static let tcnChars = Array("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!?{~}(^)[_]@#$,./&-*++=")
+    private static let pieceChars = Array("qnrbkp")
+    private static let fileChars = Array("abcdefgh")
+
+    struct DecodedMove {
+        let from: String?  // nil for drop moves (crazyhouse)
+        let to: String
+        let promotion: Character?
+    }
+
+    /// Decode a TCN string into an array of UCI-style moves.
+    static func decode(_ tcn: String) -> [DecodedMove] {
+        let chars = Array(tcn)
+        var moves: [DecodedMove] = []
+
+        var i = 0
+        while i + 1 < chars.count {
+            guard let fromIdx = tcnChars.firstIndex(of: chars[i]),
+                  let toIdx = tcnChars.firstIndex(of: chars[i + 1]) else {
+                i += 2
+                continue
+            }
+
+            var promotion: Character? = nil
+            var actualToIdx = toIdx
+
+            // Promotion: toIdx > 63 encodes piece type and direction
+            if toIdx > 63 {
+                let promoIdx = (toIdx - 64) / 3
+                if promoIdx < pieceChars.count {
+                    promotion = pieceChars[promoIdx]
+                }
+                actualToIdx = fromIdx + (fromIdx < 16 ? -8 : 8) + ((toIdx - 1) % 3) - 1
+            }
+
+            let from: String?
+            if fromIdx > 75 {
+                // Drop move (crazyhouse) — skip, not supported
+                from = nil
+            } else {
+                let fromFile = fileChars[fromIdx % 8]
+                let fromRank = fromIdx / 8 + 1
+                from = "\(fromFile)\(fromRank)"
+            }
+
+            let toFile = fileChars[actualToIdx % 8]
+            let toRank = actualToIdx / 8 + 1
+            let to = "\(toFile)\(toRank)"
+
+            moves.append(DecodedMove(from: from, to: to, promotion: promotion))
+            i += 2
+        }
+
+        return moves
+    }
+
+    /// Generate a PGN string from TCN-encoded moves and header values.
+    static func generatePGN(
+        tcn: String,
+        white: String, black: String, date: String,
+        result: String?, whiteElo: Int?, blackElo: Int?,
+        timeControl: String?, eco: String?, startFEN: String? = nil
+    ) -> String? {
+        let moves = decode(tcn)
+        guard !moves.isEmpty else { return nil }
+
+        var board = startFEN != nil ? ChessBoard(fen: startFEN!) : ChessBoard()
+        var sanMoves: [String] = []
+
+        for move in moves {
+            guard let from = move.from else { continue } // Skip drop moves
+
+            var uci = "\(from)\(move.to)"
+            if let promo = move.promotion {
+                uci += String(promo)
+            }
+
+            let san = board.uciToSAN(uci)
+            guard board.makeMoveSAN(san) != nil else {
+                // Invalid move — stop here, return what we have
+                break
+            }
+            sanMoves.append(san)
+        }
+
+        guard !sanMoves.isEmpty else { return nil }
+
+        // Build PGN string
+        var pgn = ""
+        pgn += "[Event \"Live Chess\"]\n"
+        pgn += "[Site \"Chess.com\"]\n"
+        pgn += "[Date \"\(date)\"]\n"
+        pgn += "[White \"\(white)\"]\n"
+        pgn += "[Black \"\(black)\"]\n"
+        pgn += "[Result \"\(result ?? "*")\"]\n"
+        if let elo = whiteElo { pgn += "[WhiteElo \"\(elo)\"]\n" }
+        if let elo = blackElo { pgn += "[BlackElo \"\(elo)\"]\n" }
+        if let tc = timeControl { pgn += "[TimeControl \"\(tc)\"]\n" }
+        if let e = eco { pgn += "[ECO \"\(e)\"]\n" }
+        if let fen = startFEN {
+            pgn += "[SetUp \"1\"]\n"
+            pgn += "[FEN \"\(fen)\"]\n"
+        }
+        pgn += "\n"
+
+        // Format moves: 1. e4 e5 2. Nf3 Nc6 ...
+        for (i, san) in sanMoves.enumerated() {
+            if i % 2 == 0 {
+                pgn += "\(i / 2 + 1). "
+            }
+            pgn += san
+            if i < sanMoves.count - 1 {
+                pgn += " "
+            }
+        }
+        pgn += " \(result ?? "*")"
+
+        return pgn
     }
 }

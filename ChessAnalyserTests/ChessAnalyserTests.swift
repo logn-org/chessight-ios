@@ -400,3 +400,56 @@ final class SharedContentTests: XCTestCase {
         }
     }
 }
+
+// MARK: - TCN Decoder Tests
+
+final class TCNDecoderTests: XCTestCase {
+
+    func testDecodeSingleMove() {
+        // "mc" = e2e4 (e=4, c=2 → from=12 (e2), to=28 (e4))
+        // TCN: 'a'=0...'h'=7 for files, rows are *8
+        // Actually let's test with known TCN from chess.com
+        // "lN" in TCN = e2-e4: 'l'=index 11 (d2), 'N'=index 27 (d4)
+        let moves = TCNDecoder.decode("mC")
+        XCTAssertFalse(moves.isEmpty, "Should decode at least one move")
+        XCTAssertNotNil(moves.first?.from)
+        XCTAssertNotNil(moves.first?.to)
+    }
+
+    func testDecodeMultipleMoves() {
+        // A typical opening sequence in TCN
+        let tcn = "mCYKbsSMvr"  // Several moves
+        let moves = TCNDecoder.decode(tcn)
+        XCTAssertEqual(moves.count, 5, "5 pairs = 5 moves")
+        for move in moves {
+            XCTAssertNotNil(move.from, "Regular moves should have from square")
+            XCTAssertFalse(move.to.isEmpty, "All moves should have to square")
+        }
+    }
+
+    func testDecodeEmptyString() {
+        let moves = TCNDecoder.decode("")
+        XCTAssertTrue(moves.isEmpty)
+    }
+
+    func testDecodeOddLength() {
+        // Odd-length TCN should just ignore the trailing character
+        let moves = TCNDecoder.decode("mC0")
+        XCTAssertEqual(moves.count, 1)
+    }
+
+    func testMoveSquaresAreValidAlgebraic() {
+        let tcn = "mCYKbsSM"
+        let moves = TCNDecoder.decode(tcn)
+        let validFiles: Set<Character> = ["a","b","c","d","e","f","g","h"]
+        let validRanks: Set<Character> = ["1","2","3","4","5","6","7","8"]
+        for move in moves {
+            if let from = move.from {
+                XCTAssertTrue(validFiles.contains(from.first!), "File should be a-h: \(from)")
+                XCTAssertTrue(validRanks.contains(from.last!), "Rank should be 1-8: \(from)")
+            }
+            XCTAssertTrue(validFiles.contains(move.to.first!), "File should be a-h: \(move.to)")
+            XCTAssertTrue(validRanks.contains(move.to.last!), "Rank should be 1-8: \(move.to)")
+        }
+    }
+}
