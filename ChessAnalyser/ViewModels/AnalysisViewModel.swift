@@ -646,6 +646,23 @@ final class AnalysisViewModel {
         if board.isFiftyMoveRule() {
             return .fiftyMoveRule
         }
+
+        // At the last move of a loaded game — show the game result (resign, timeout, abandonment, etc.)
+        if !isExploring,
+           let game = gameState.game,
+           gameState.isAtEnd,
+           !game.moves.isEmpty {
+            let result = game.result
+            if result == "1-0" {
+                // If it's not checkmate on the board, white won by resignation/timeout
+                return .gameResult(result: result, winner: .white)
+            } else if result == "0-1" {
+                return .gameResult(result: result, winner: .black)
+            } else if result == "1/2-1/2" {
+                return .gameResult(result: result, winner: nil)
+            }
+        }
+
         return nil
     }
 
@@ -655,16 +672,30 @@ final class AnalysisViewModel {
         case insufficientMaterial
         case threefoldRepetition
         case fiftyMoveRule
+        case gameResult(result: String, winner: PieceColor?)
 
         var isCheckmate: Bool {
             if case .checkmate = self { return true }
             return false
         }
 
+        var isWin: Bool {
+            switch self {
+            case .checkmate: return true
+            case .gameResult(_, let winner): return winner != nil
+            default: return false
+            }
+        }
+
         var displayText: String {
             switch self {
             case .checkmate(let winner):
                 return "Checkmate\n\(winner == .white ? "White" : "Black") wins!"
+            case .gameResult(let result, let winner):
+                if let winner = winner {
+                    return "\(result)\n\(winner == .white ? "White" : "Black") wins"
+                }
+                return "\(result)\nDraw"
             case .stalemate:
                 return "Stalemate\nDraw"
             case .insufficientMaterial:

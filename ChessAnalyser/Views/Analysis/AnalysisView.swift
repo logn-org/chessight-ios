@@ -780,6 +780,7 @@ struct AnalysisView: View {
         let color: Color
         switch status {
         case .checkmate: icon = "crown.fill"; color = AppColors.accent
+        case .gameResult(_, let winner): icon = winner != nil ? "flag.fill" : "equal.circle.fill"; color = winner != nil ? AppColors.accent : AppColors.textSecondary
         case .stalemate: icon = "equal.circle.fill"; color = AppColors.textSecondary
         case .insufficientMaterial: icon = "xmark.circle.fill"; color = AppColors.textMuted
         case .threefoldRepetition: icon = "repeat.circle.fill"; color = AppColors.textSecondary
