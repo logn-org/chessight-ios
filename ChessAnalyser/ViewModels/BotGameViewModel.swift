@@ -153,12 +153,31 @@ final class BotGameViewModel {
         if result.isCheckmate {
             gameOver = true
             gameResult = isWhite ? "White wins by checkmate!" : "Black wins by checkmate!"
+            SoundManager.shared.playCheckmate()
             return
         }
 
         if !board.hasLegalMoves(color: board.sideToMove) {
             gameOver = true
             gameResult = "Draw by stalemate"
+            return
+        }
+
+        if board.isInsufficientMaterial() {
+            gameOver = true
+            gameResult = "Draw — insufficient material"
+            return
+        }
+
+        if board.isThreefoldRepetition() {
+            gameOver = true
+            gameResult = "Draw — threefold repetition"
+            return
+        }
+
+        if board.isFiftyMoveRule() {
+            gameOver = true
+            gameResult = "Draw — fifty-move rule"
             return
         }
 
@@ -230,12 +249,31 @@ final class BotGameViewModel {
             if moveResult.isCheckmate {
                 gameOver = true
                 gameResult = isWhite ? "White wins by checkmate!" : "Black wins by checkmate!"
+                SoundManager.shared.playCheckmate()
                 return
             }
 
             if !board.hasLegalMoves(color: board.sideToMove) {
                 gameOver = true
                 gameResult = "Draw by stalemate"
+                return
+            }
+
+            if board.isInsufficientMaterial() {
+                gameOver = true
+                gameResult = "Draw — insufficient material"
+                return
+            }
+
+            if board.isThreefoldRepetition() {
+                gameOver = true
+                gameResult = "Draw — threefold repetition"
+                return
+            }
+
+            if board.isFiftyMoveRule() {
+                gameOver = true
+                gameResult = "Draw — fifty-move rule"
                 return
             }
 

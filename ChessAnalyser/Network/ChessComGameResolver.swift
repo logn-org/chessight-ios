@@ -38,7 +38,9 @@ actor ChessComGameResolver {
     /// Resolve a chess.com game ID to a PGN string and metadata.
     func resolveGame(gameId: String) async throws -> ResolvedGame {
         CrashLogger.logNetwork("Resolving chess.com game: \(gameId)")
+        let resolveTrace = PerformanceTracer.traceGameResolve()
         guard let callbackURL = URL(string: "https://www.chess.com/callback/live/game/\(gameId)") else {
+            resolveTrace?.stop()
             throw GameResolveError.invalidData
         }
         let (data, response) = try await session.data(from: callbackURL)
@@ -62,6 +64,8 @@ actor ChessComGameResolver {
                 // Validate the generated PGN
                 if PGNParser.validate(pgn) == nil {
                     CrashLogger.logNetwork("TCN decode successful for game \(gameId)")
+                    resolveTrace?.setValue(1, forMetric: "tcn_success")
+                    resolveTrace?.stop()
                     return ResolvedGame(
                         pgn: pgn,
                         white: headers.White,
@@ -76,7 +80,10 @@ actor ChessComGameResolver {
 
         // Fallback: fetch PGN from player's game archive (slow, 2nd API call)
         CrashLogger.logNetwork("Falling back to archive API for game \(gameId)")
-        return try await resolveViaArchive(gameData: gameData, gameId: gameId)
+        resolveTrace?.setValue(0, forMetric: "tcn_success")
+        let result = try await resolveViaArchive(gameData: gameData, gameId: gameId)
+        resolveTrace?.stop()
+        return result
     }
 
     // MARK: - Archive Fallback

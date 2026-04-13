@@ -626,17 +626,25 @@ final class AnalysisViewModel {
         explorationBoard ?? gameState.currentBoard
     }
 
-    /// Detect checkmate or stalemate on the current display board
+    /// Detect checkmate, stalemate, or insufficient material on the current display board
     var boardGameEndStatus: GameEndStatus? {
         let board = displayBoard
         let color = board.sideToMove
         if !board.hasLegalMoves(color: color) {
             if board.isKingInCheck(color: color) {
-                let winner = color.opposite
-                return .checkmate(winner: winner)
+                return .checkmate(winner: color.opposite)
             } else {
                 return .stalemate
             }
+        }
+        if board.isInsufficientMaterial() {
+            return .insufficientMaterial
+        }
+        if board.isThreefoldRepetition() {
+            return .threefoldRepetition
+        }
+        if board.isFiftyMoveRule() {
+            return .fiftyMoveRule
         }
         return nil
     }
@@ -644,6 +652,9 @@ final class AnalysisViewModel {
     enum GameEndStatus {
         case checkmate(winner: PieceColor)
         case stalemate
+        case insufficientMaterial
+        case threefoldRepetition
+        case fiftyMoveRule
 
         var isCheckmate: Bool {
             if case .checkmate = self { return true }
@@ -656,6 +667,12 @@ final class AnalysisViewModel {
                 return "Checkmate\n\(winner == .white ? "White" : "Black") wins!"
             case .stalemate:
                 return "Stalemate\nDraw"
+            case .insufficientMaterial:
+                return "Draw\nInsufficient material"
+            case .threefoldRepetition:
+                return "Draw\nThreefold repetition"
+            case .fiftyMoveRule:
+                return "Draw\nFifty-move rule"
             }
         }
     }

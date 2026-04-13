@@ -776,10 +776,20 @@ struct AnalysisView: View {
     }
 
     private func gameEndOverlay(_ status: AnalysisViewModel.GameEndStatus) -> some View {
-        VStack(spacing: AppSpacing.sm) {
-            Image(systemName: status.isCheckmate ? "crown.fill" : "equal.circle.fill")
+        let icon: String
+        let color: Color
+        switch status {
+        case .checkmate: icon = "crown.fill"; color = AppColors.accent
+        case .stalemate: icon = "equal.circle.fill"; color = AppColors.textSecondary
+        case .insufficientMaterial: icon = "xmark.circle.fill"; color = AppColors.textMuted
+        case .threefoldRepetition: icon = "repeat.circle.fill"; color = AppColors.textSecondary
+        case .fiftyMoveRule: icon = "clock.fill"; color = AppColors.textMuted
+        }
+
+        return VStack(spacing: AppSpacing.sm) {
+            Image(systemName: icon)
                 .font(.system(size: 36))
-                .foregroundStyle(status.isCheckmate ? AppColors.accent : AppColors.textSecondary)
+                .foregroundStyle(color)
 
             Text(status.displayText)
                 .font(.system(size: 18, weight: .bold))

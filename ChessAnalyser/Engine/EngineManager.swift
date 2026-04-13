@@ -29,12 +29,14 @@ final class EngineManager {
         }
 
         initTask = Task {
+            let trace = PerformanceTracer.traceEngineInit()
             CrashLogger.logEngine("Initializing Stockfish (threads: \(config.threads), hash: \(config.hashMB)MB)")
             let actor = StockfishActor()
             try await actor.initialize(config: config)
             self.stockfish = actor
             self.isInitialized = true
             CrashLogger.logEngine("Stockfish initialized successfully")
+            trace?.stop()
         }
 
         do {

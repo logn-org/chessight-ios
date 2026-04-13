@@ -11,6 +11,10 @@ struct ChessBoard {
     private(set) var halfMoveClock: Int = 0
     private(set) var fullMoveNumber: Int = 1
 
+    /// Tracks position keys for threefold repetition detection.
+    /// Key = board + side to move + castling + en passant (FEN without clocks).
+    private(set) var positionHistory: [String: Int] = [:]
+
     struct CastlingRights: OptionSet, Equatable {
         let rawValue: Int
         static let whiteKingside  = CastlingRights(rawValue: 1 << 0)
@@ -36,10 +40,12 @@ struct ChessBoard {
 
     init() {
         setupStartingPosition()
+        recordPosition()
     }
 
     init(fen: String) {
         parseFEN(fen)
+        recordPosition()
     }
 
     // MARK: - Board Access
@@ -251,6 +257,7 @@ struct ChessBoard {
         }
 
         sideToMove = sideToMove.opposite
+        recordPosition()
 
         let isCheck = isKingInCheck(color: sideToMove)
         let isCheckmate = isCheck && !hasLegalMoves(color: sideToMove)
@@ -296,6 +303,7 @@ struct ChessBoard {
         if sideToMove == .black { fullMoveNumber += 1 }
         halfMoveClock += 1
         sideToMove = sideToMove.opposite
+        recordPosition()
 
         let isCheck = isKingInCheck(color: sideToMove)
         let isCheckmate = isCheck && !hasLegalMoves(color: sideToMove)
@@ -494,6 +502,80 @@ struct ChessBoard {
             }
         }
         return false
+    }
+
+    // MARK: - Insufficient Material Detection
+
+    /// Returns true if neither side can force checkmate.
+    /// Covers: K vs K, K+B vs K, K+N vs K, K+B vs K+B (same color bishops)
+    func isInsufficientMaterial() -> Bool {
+        var whitePieces: [PieceType] = []
+        var blackPieces: [PieceType] = []
+        var whiteBishopLight: Bool?
+        var blackBishopLight: Bool?
+
+        for rank in 0..<8 {
+            for file in 0..<8 {
+                guard let piece = squares[rank][file] else { continue }
+                if piece.color == .white {
+                    if piece.type != .king { whitePieces.append(piece.type) }
+                    if piece.type == .bishop {
+                        whiteBishopLight = (file + rank) % 2 == 1
+                    }
+                } else {
+                    if piece.type != .king { blackPieces.append(piece.type) }
+                    if piece.type == .bishop {
+                        blackBishopLight = (file + rank) % 2 == 1
+                    }
+                }
+            }
+        }
+
+        // K vs K
+        if whitePieces.isEmpty && blackPieces.isEmpty { return true }
+
+        // K+B vs K or K vs K+B
+        if whitePieces.isEmpty && blackPieces == [.bishop] { return true }
+        if blackPieces.isEmpty && whitePieces == [.bishop] { return true }
+
+        // K+N vs K or K vs K+N
+        if whitePieces.isEmpty && blackPieces == [.knight] { return true }
+        if blackPieces.isEmpty && whitePieces == [.knight] { return true }
+
+        // K+B vs K+B (same color bishops)
+        if whitePieces == [.bishop] && blackPieces == [.bishop] {
+            if let wLight = whiteBishopLight, let bLight = blackBishopLight, wLight == bLight {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    // MARK: - Threefold Repetition
+
+    /// Position key for repetition detection: board + side + castling + ep (no clocks).
+    private func positionKey() -> String {
+        let fen = toFEN()
+        // Use first 4 parts of FEN (board, side, castling, ep) — skip halfmove and fullmove clocks
+        return fen.split(separator: " ").prefix(4).joined(separator: " ")
+    }
+
+    /// Record the current position in history.
+    private mutating func recordPosition() {
+        let key = positionKey()
+        positionHistory[key, default: 0] += 1
+    }
+
+    /// Returns true if the current position has occurred 3 or more times.
+    func isThreefoldRepetition() -> Bool {
+        let key = positionKey()
+        return (positionHistory[key] ?? 0) >= 3
+    }
+
+    /// Fifty-move rule: draw if 50 moves (100 half-moves) without pawn move or capture.
+    func isFiftyMoveRule() -> Bool {
+        return halfMoveClock >= 100
     }
 
     // MARK: - Piece Safety Analysis

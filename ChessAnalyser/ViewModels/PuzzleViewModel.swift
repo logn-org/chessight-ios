@@ -35,12 +35,14 @@ final class PuzzleViewModel {
         CrashLogger.log("Loading today's puzzle")
         isLoading = true
         error = nil
+        let trace = PerformanceTracer.tracePuzzleFetch()
         do {
             puzzle = try await api.getTodaysPuzzle()
             if let p = puzzle { setupPuzzle(p) }
         } catch {
             self.error = error.localizedDescription
         }
+        trace?.stop()
         isLoading = false
     }
 

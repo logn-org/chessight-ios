@@ -82,6 +82,7 @@ final class AnalysisEngine {
         // Phase 1: Gather all engine evals (lightweight — no PieceAnalysis)
         // Phase 2: Classify all moves using cached evals (no engine calls)
         backgroundTask = Task { [weak self] in
+            let analysisTrace = PerformanceTracer.traceGameAnalysis(moveCount: game.moves.count)
             await stockfish.newGame()
 
             let startFEN = game.moves.first?.fenBefore
@@ -111,9 +112,10 @@ final class AnalysisEngine {
                 self?.updateProgress(current: move.moveIndex + 1, total: game.moves.count)
             }
 
-            guard !Task.isCancelled else { return }
+            guard !Task.isCancelled else { analysisTrace?.stop(); return }
 
             // Phase 2: Classify all moves using cached evals (no engine calls, pure computation)
+            let classTrace = PerformanceTracer.traceMoveClassification(moveCount: game.moves.count)
             for move in game.moves {
                 guard !Task.isCancelled else { break }
 
@@ -126,11 +128,13 @@ final class AnalysisEngine {
 
                 self?.commitAnalysis(analysis, moveIndex: move.moveIndex, total: game.moves.count)
             }
+            classTrace?.stop()
 
             // Finalize
             if !Task.isCancelled {
                 self?.finalizeGameAnalysis(game: game, depth: depth)
             }
+            analysisTrace?.stop()
         }
     }
 

@@ -22,6 +22,7 @@ final class GameListViewModel {
         games = []
         archivesLoaded = 0
         hasMorePages = true
+        let trace = PerformanceTracer.traceProfileFetch()
 
         do {
             let archives = try await api.getGameArchives(username: username)
@@ -34,6 +35,7 @@ final class GameListViewModel {
             self.error = error.localizedDescription
         }
 
+        trace?.stop()
         isLoading = false
     }
 

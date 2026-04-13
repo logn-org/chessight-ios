@@ -54,10 +54,14 @@ final class GameState {
     }
 
     func loadPGN(_ pgn: String) throws {
+        let trace = PerformanceTracer.tracePGNParse()
         if let validationError = PGNParser.validate(pgn) {
+            trace?.stop()
             throw PGNParserError.invalidPGN(validationError)
         }
         let parsedGame = try PGNParser.parse(pgn)
+        trace?.setValue(Int64(parsedGame.moves.count), forMetric: "move_count")
+        trace?.stop()
         loadGame(parsedGame)
     }
 

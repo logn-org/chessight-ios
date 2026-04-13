@@ -148,6 +148,71 @@ final class ChessBoardTests: XCTestCase {
         XCTAssertTrue(result?.isCastling ?? false)
     }
 
+    func testBothSidesCanCastle() {
+        // Both sides have clear kingside, both should be able to O-O
+        let fen = "r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1"
+        var board = ChessBoard(fen: fen)
+
+        // White castles kingside
+        let whiteResult = board.makeMoveSAN("O-O")
+        XCTAssertNotNil(whiteResult, "White should be able to castle")
+        XCTAssertTrue(whiteResult?.isCastling ?? false)
+
+        // Black should still have castling rights
+        XCTAssertTrue(board.castlingRights.contains(.blackKingside), "Black kingside rights should remain")
+        XCTAssertTrue(board.castlingRights.contains(.blackQueenside), "Black queenside rights should remain")
+
+        // Black castles kingside
+        let blackResult = board.makeMoveSAN("O-O")
+        XCTAssertNotNil(blackResult, "Black should be able to castle after white castled")
+        XCTAssertTrue(blackResult?.isCastling ?? false)
+    }
+
+    func testBothSidesCanCastleQueenside() {
+        let fen = "r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1"
+        var board = ChessBoard(fen: fen)
+
+        let whiteResult = board.makeMoveSAN("O-O-O")
+        XCTAssertNotNil(whiteResult, "White should be able to castle queenside")
+
+        let blackResult = board.makeMoveSAN("O-O-O")
+        XCTAssertNotNil(blackResult, "Black should be able to castle queenside after white castled")
+    }
+
+    func testInsufficientMaterial_KingVsKing() {
+        let board = ChessBoard(fen: "8/8/4k3/8/8/4K3/8/8 w - - 0 1")
+        XCTAssertTrue(board.isInsufficientMaterial(), "K vs K is insufficient")
+    }
+
+    func testInsufficientMaterial_KingBishopVsKing() {
+        let board = ChessBoard(fen: "8/8/4k3/8/8/4K3/3B4/8 w - - 0 1")
+        XCTAssertTrue(board.isInsufficientMaterial(), "K+B vs K is insufficient")
+    }
+
+    func testInsufficientMaterial_KingKnightVsKing() {
+        let board = ChessBoard(fen: "8/8/4k3/8/8/4K3/3N4/8 w - - 0 1")
+        XCTAssertTrue(board.isInsufficientMaterial(), "K+N vs K is insufficient")
+    }
+
+    func testInsufficientMaterial_KingBishopVsKingBishopSameColor() {
+        // Both bishops on light squares (c1=dark, f4=dark → use light: d3=light, e6=light)
+        let board = ChessBoard(fen: "8/8/4kb2/8/8/3BK3/8/8 w - - 0 1")
+        // d3: file=3,rank=2 → 3+2=5 odd=light; f6: file=5,rank=5 → 5+5=10 even=dark
+        // Need same color. Let's use c4 (2+3=5 light) and f7 (5+6=11 light)
+        let board2 = ChessBoard(fen: "8/5b2/4k3/8/2B5/4K3/8/8 w - - 0 1")
+        XCTAssertTrue(board2.isInsufficientMaterial(), "K+B vs K+B same color bishops is insufficient")
+    }
+
+    func testSufficientMaterial_KingRookVsKing() {
+        let board = ChessBoard(fen: "8/8/4k3/8/8/4K3/3R4/8 w - - 0 1")
+        XCTAssertFalse(board.isInsufficientMaterial(), "K+R vs K is sufficient")
+    }
+
+    func testSufficientMaterial_KingPawnVsKing() {
+        let board = ChessBoard(fen: "8/8/4k3/8/8/4K3/3P4/8 w - - 0 1")
+        XCTAssertFalse(board.isInsufficientMaterial(), "K+P vs K is sufficient")
+    }
+
     func testMaterialCount() {
         let board = ChessBoard()
         // Starting position: Q(9) + 2R(10) + 2B(6) + 2N(6) + 8P(8) = 39
