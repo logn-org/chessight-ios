@@ -146,6 +146,19 @@ struct SettingsTab: View {
                         }
                     }
                     .listRowBackground(AppColors.surface)
+
+                    NavigationLink {
+                        LicensesView()
+                    } label: {
+                        HStack {
+                            Text("Open Source Licenses")
+                                .foregroundStyle(AppColors.textPrimary)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundStyle(AppColors.textMuted)
+                        }
+                    }
+                    .listRowBackground(AppColors.surface)
                 }
             }
             .listStyle(.insetGrouped)
