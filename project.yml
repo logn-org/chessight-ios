@@ -97,6 +97,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.logncomplexity.chessight
+        DEVELOPMENT_TEAM: H238K3J8ZP
+        CODE_SIGN_STYLE: Automatic
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         INFOPLIST_FILE: "$(SRCROOT)/ChessAnalyser/Info.plist"
@@ -118,6 +120,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.logncomplexity.chessight.share
+        DEVELOPMENT_TEAM: H238K3J8ZP
+        CODE_SIGN_STYLE: Automatic
         INFOPLIST_FILE: "$(SRCROOT)/ChessAnalyserShare/Info.plist"
         SWIFT_VERSION: "5.9"
         GENERATE_INFOPLIST_FILE: false
