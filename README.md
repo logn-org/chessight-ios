@@ -147,7 +147,3 @@ ChessAnalyser/
 - **Crash reporting**: Firebase Crashlytics + Analytics
 - **Project generation**: xcodegen
 - **Package management**: Swift Package Manager (Firebase SDK)
-
-## License
-
-All rights reserved. This is a private project.
