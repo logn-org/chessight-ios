@@ -1,0 +1,69 @@
+Chessight - Chess Analysis App
+Copyright (c) 2026 LogNComplexity
+
+This repository contains multiple components with different licenses:
+
+================================================================================
+STOCKFISH ENGINE (ChessAnalyser/Stockfish/)
+================================================================================
+
+Stockfish is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+Stockfish is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program. If not, see <https://www.gnu.org/licenses/>.
+
+The full text of the GPL v3 license can be found at:
+https://www.gnu.org/licenses/gpl-3.0.en.html
+
+Source: https://stockfishchess.org
+Repository: https://github.com/official-stockfish/Stockfish
+
+================================================================================
+NNUE NEURAL NETWORK FILES (*.nnue)
+================================================================================
+
+The NNUE evaluation files are part of the Stockfish project and are licensed
+under the GNU General Public License v3 (same as above).
+
+================================================================================
+CHESS PIECE ARTWORK (ChessAnalyser/Resources/Assets.xcassets/)
+================================================================================
+
+The cburnett chess piece SVG set is licensed under:
+- BSD License
+- Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)
+
+Source: https://github.com/ornicar/lila/tree/master/public/piece/cburnett
+Original author: Colin M.L. Burnett
+
+================================================================================
+APPLICATION CODE
+================================================================================
+
+The application code (all Swift source files, project configuration, and
+resources not covered above) is licensed under the GNU General Public License
+v3 to comply with Stockfish's copyleft requirements.
+
+This means:
+- You may use, modify, and distribute this code
+- Any derivative work must also be distributed under GPL v3
+- You must make source code available when distributing binaries
+- See https://www.gnu.org/licenses/gpl-3.0.en.html for full terms
+
+================================================================================
+THIRD-PARTY DEPENDENCIES (via Swift Package Manager)
+================================================================================
+
+Firebase iOS SDK - Apache License 2.0
+  https://github.com/firebase/firebase-ios-sdk
+  Copyright (c) Google LLC
+
+These dependencies are fetched at build time via Swift Package Manager and
+are not included in this repository.
