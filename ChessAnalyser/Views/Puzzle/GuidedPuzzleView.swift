@@ -38,6 +38,11 @@ struct GuidedPuzzleView: View {
         .onAppear {
             Analytics.screenViewed("guided_puzzle")
         }
+        .onChange(of: viewModel.currentSolutionIndex) { _, _ in
+            // Clear hint after any move is made
+            showHint = false
+            hintMoveUCI = nil
+        }
     }
 
     // MARK: - Learn Mode (preview + arrows)
