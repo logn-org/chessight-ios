@@ -7,6 +7,9 @@ struct GuidedPuzzleView: View {
     @State private var showHint = false
     @State private var hintMoveUCI: String?
     @State private var mode: Mode = .learn
+    @State private var puzzleStartTime = CFAbsoluteTimeGetCurrent()
+    @State private var wrongAttempts = 0
+    @State private var usedHintInSession = false
 
     enum Mode { case learn, practice }
 
@@ -40,11 +43,24 @@ struct GuidedPuzzleView: View {
         .toolbarColorScheme(.dark, for: .navigationBar)
         .onAppear {
             Analytics.screenViewed("guided_puzzle")
+            CrashLogger.log("Guided puzzle opened: \(puzzle.name)")
         }
         .onChange(of: viewModel.currentSolutionIndex) { _, _ in
-            // Clear hint after any move is made
             showHint = false
             hintMoveUCI = nil
+        }
+        .onChange(of: viewModel.puzzleCompleted) { _, completed in
+            if completed {
+                let currentPuzzle = currentPuzzleIndex < allPuzzles.count ? allPuzzles[currentPuzzleIndex] : puzzle
+                let timeMs = Int((CFAbsoluteTimeGetCurrent() - puzzleStartTime) * 1000)
+                Analytics.guidedPuzzleSolved(
+                    name: currentPuzzle.name, category: puzzle.name,
+                    usedHint: usedHintInSession, attempts: wrongAttempts, timeMs: timeMs
+                )
+            }
+        }
+        .onChange(of: viewModel.wrongMove) { _, wrong in
+            if wrong { wrongAttempts += 1 }
         }
     }
 
@@ -90,6 +106,10 @@ struct GuidedPuzzleView: View {
             // Try This button
             Button {
                 mode = .practice
+                puzzleStartTime = CFAbsoluteTimeGetCurrent()
+                wrongAttempts = 0
+                usedHintInSession = false
+                Analytics.guidedPuzzleStarted(name: currentPuzzle.name, category: puzzle.name)
                 viewModel.loadCustomPuzzle(title: currentPuzzle.name, fen: currentPuzzle.fen, pgn: currentPuzzle.pgn)
             } label: {
                 HStack {
@@ -273,6 +293,10 @@ struct GuidedPuzzleView: View {
                 Button {
                     currentPuzzleIndex += 1
                     let next = allPuzzles[currentPuzzleIndex]
+                    Analytics.guidedPuzzleTryAnother(name: next.name)
+                    puzzleStartTime = CFAbsoluteTimeGetCurrent()
+                    wrongAttempts = 0
+                    usedHintInSession = false
                     viewModel.loadCustomPuzzle(title: next.name, fen: next.fen, pgn: next.pgn)
                     showHint = false
                     hintMoveUCI = nil
@@ -348,6 +372,9 @@ struct GuidedPuzzleView: View {
     private func toggleHint() {
         showHint.toggle()
         if showHint {
+            usedHintInSession = true
+            let currentPuzzle = currentPuzzleIndex < allPuzzles.count ? allPuzzles[currentPuzzleIndex] : puzzle
+            Analytics.guidedPuzzleHintUsed(name: currentPuzzle.name)
             let idx = viewModel.currentSolutionIndex
             if idx < viewModel.solutionMoves.count {
                 hintMoveUCI = viewModel.solutionMoves[idx]

@@ -210,10 +210,9 @@ struct FamousGamesList: View {
         .navigationTitle("Famous Games")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .onAppear { Analytics.learnCategoryOpened(category: "famous_games") }
     }
 }
-
-// MARK: - Openings List
 
 // MARK: - Guided Puzzle Category List
 
@@ -256,6 +255,7 @@ struct GuidedPuzzleCategoryList: View {
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .onAppear { Analytics.learnCategoryOpened(category: title.lowercased()) }
     }
 }
 
@@ -347,6 +347,7 @@ struct PracticeCategoryList: View {
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .onAppear { Analytics.learnCategoryOpened(category: title.lowercased()) }
     }
 }
 
@@ -391,5 +392,6 @@ struct OpeningsList: View {
         .navigationTitle("Openings")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .onAppear { Analytics.learnCategoryOpened(category: "openings") }
     }
 }

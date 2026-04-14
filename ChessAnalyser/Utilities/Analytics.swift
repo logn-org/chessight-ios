@@ -192,6 +192,54 @@ enum Analytics {
         log("game_end_detected", params: ["type": type])
     }
 
+    // MARK: - Learn Tab
+
+    static func learnCategoryOpened(category: String) {
+        log("learn_category_opened", params: ["category": category])
+    }
+
+    static func guidedPuzzleStarted(name: String, category: String) {
+        log("guided_puzzle_started", params: ["puzzle_name": name, "category": category])
+    }
+
+    static func guidedPuzzleSolved(name: String, category: String, usedHint: Bool, attempts: Int, timeMs: Int) {
+        log("guided_puzzle_solved", params: [
+            "puzzle_name": name,
+            "category": category,
+            "used_hint": usedHint,
+            "attempts": attempts,
+            "time_ms": timeMs
+        ])
+    }
+
+    static func guidedPuzzleFailed(name: String, category: String, attempts: Int) {
+        log("guided_puzzle_failed", params: ["puzzle_name": name, "category": category, "attempts": attempts])
+    }
+
+    static func guidedPuzzleHintUsed(name: String) {
+        log("guided_puzzle_hint_used", params: ["puzzle_name": name])
+    }
+
+    static func guidedPuzzleTryAnother(name: String) {
+        log("guided_puzzle_try_another", params: ["puzzle_name": name])
+    }
+
+    static func endgamePracticeStarted(name: String) {
+        log("endgame_practice_started", params: ["pattern_name": name])
+    }
+
+    static func endgamePracticeCompleted(name: String, result: String, durationMs: Int) {
+        log("endgame_practice_completed", params: [
+            "pattern_name": name,
+            "result": result,
+            "duration_ms": durationMs
+        ])
+    }
+
+    static func chess960Generated() {
+        log("chess960_generated")
+    }
+
     // MARK: - Device & Platform
 
     static func appLaunched(isIPad: Bool, appVersion: String) {

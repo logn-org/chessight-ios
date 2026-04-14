@@ -193,6 +193,7 @@ final class BoardEditorViewModel {
 
     /// Set up a Chess960 (Fischer Random) starting position
     func shuffleChess960() {
+        Analytics.chess960Generated()
         saveState()
         board = ChessBoard(fen: "8/8/8/8/8/8/8/8 w - - 0 1")
 
