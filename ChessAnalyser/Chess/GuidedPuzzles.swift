@@ -111,6 +111,42 @@ enum GuidedPuzzles {
         ),
     ]
 
+    static let railroadMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Railroad Mate",
+            description: "Queen and Rook drive the king like a train on rails",
+            fen: "8/8/8/6k1/8/5Q1R/8/6K1 w - - 0 1",
+            pgn: "1. Rh5+ Kg6 2. Qf5+ Kg7 3. Rh7+ Kg8 4. Qf7#",
+            previewFEN: "6k1/5Q1R/8/8/8/8/6K1/8 w - - 0 1",
+            detailed: "The Railroad Mate is a mix of the Kill Box and Triangle patterns. The Rook and Queen move like an unstoppable train along a rail track to checkmate the enemy King. It's a useful process to know — especially in blitz when you have little time to deliver checkmate."
+        ),
+        GuidedPuzzle(
+            name: "Railroad Mate — Advanced",
+            description: "Drive the king across the board with Queen and Rook",
+            fen: "2b3k1/1pr4p/p2R2p1/1q6/8/QP5P/P6K/8 w - - 0 30",
+            pgn: "1. Rd8+ Kf7 2. Qf8+ Ke6 3. Rd6+ Ke5 4. Qf6+ Ke4 5. Rd4+ Ke3 6. Qf4+ Ke2 7. Rd2+ Ke1 8. Qf2#",
+            detailed: "An advanced railroad mate — the Queen and Rook coordinate to push the king across the entire board. Each check forces the king to retreat until there's nowhere left to go."
+        ),
+    ]
+
+    static let maxLangeMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Max Lange Mate",
+            description: "Queen and Bishop combine — named after German player Max Lange",
+            fen: "7k/6p1/5p1p/8/Q7/1B6/8/4K3 w - - 0 1",
+            pgn: "1. Qe8+ Kh7 2. Bg8+ Kh8 3. Bf7+ Kh7 4. Qg8#",
+            previewFEN: "6Q1/5Bpk/5p1p/8/8/8/4K3/8 b - - 0 4",
+            detailed: "This checkmate pattern combines the powers of a Queen and a Bishop, named after German chess player Max Lange. The Queen delivers the checkmate while the Bishop protects the Queen and controls a critical escape square."
+        ),
+        GuidedPuzzle(
+            name: "Max Lange Mate — Advanced",
+            description: "Bishop and Queen maneuver to the mating position",
+            fen: "k7/1p2p3/p1p1pb1p/5q2/2P3pP/P1P1P1B1/3Q2PK/1r6 w - - 0 1",
+            pgn: "1. Qd8+ Ka7 2. Bb8+ Ka8 3. Bc7+ Ka7 4. Qb8#",
+            detailed: "The Bishop dances around the king, cutting off escape squares while the Queen delivers the final blow. A beautiful demonstration of Queen + Bishop coordination."
+        ),
+    ]
+
     static let epauletteMates: [GuidedPuzzle] = [
         GuidedPuzzle(
             name: "Epaulette Mate",

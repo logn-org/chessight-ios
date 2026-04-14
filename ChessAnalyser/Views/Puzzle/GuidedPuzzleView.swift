@@ -12,18 +12,21 @@ struct GuidedPuzzleView: View {
 
     let puzzle: GuidedPuzzle
     let allPuzzles: [GuidedPuzzle]
+    @State private var currentPuzzleIndex: Int = 0
 
     var body: some View {
         GeometryReader { geometry in
             let screenWidth = geometry.size.width
             let boardSize = max(1, screenWidth - AppSpacing.sm * 2)
 
+            let currentPuzzle = currentPuzzleIndex < allPuzzles.count ? allPuzzles[currentPuzzleIndex] : puzzle
+
             ScrollView {
                 VStack(spacing: 0) {
                     if mode == .learn {
-                        learnView(boardSize: boardSize)
+                        learnView(boardSize: boardSize, currentPuzzle: currentPuzzle)
                     } else {
-                        practiceView(boardSize: boardSize)
+                        practiceView(boardSize: boardSize, currentPuzzle: currentPuzzle)
                     }
                 }
             }
@@ -39,10 +42,10 @@ struct GuidedPuzzleView: View {
 
     // MARK: - Learn Mode (preview + arrows)
 
-    private func learnView(boardSize: CGFloat) -> some View {
+    private func learnView(boardSize: CGFloat, currentPuzzle: GuidedPuzzle) -> some View {
         VStack(spacing: AppSpacing.md) {
             // Detailed description
-            Text(puzzle.detailedDescription)
+            Text(currentPuzzle.detailedDescription)
                 .font(AppFonts.body)
                 .foregroundStyle(AppColors.textSecondary)
                 .multilineTextAlignment(.center)
@@ -50,7 +53,7 @@ struct GuidedPuzzleView: View {
                 .padding(.top, AppSpacing.md)
 
             // Preview board with solution arrows
-            let previewFEN = puzzle.previewFEN ?? puzzle.fen
+            let previewFEN = currentPuzzle.previewFEN ?? currentPuzzle.fen
             ZStack {
                 // Non-interactive board showing the mating position
                 MiniBoardPreview(fen: previewFEN)
@@ -63,7 +66,7 @@ struct GuidedPuzzleView: View {
             }
 
             // Mate pattern label
-            if let previewFEN = puzzle.previewFEN {
+            if let previewFEN = currentPuzzle.previewFEN {
                 let board = ChessBoard(fen: previewFEN)
                 if !board.hasLegalMoves(color: board.sideToMove) && board.isKingInCheck(color: board.sideToMove) {
                     HStack(spacing: AppSpacing.sm) {
@@ -79,7 +82,7 @@ struct GuidedPuzzleView: View {
             // Try This button
             Button {
                 mode = .practice
-                viewModel.loadCustomPuzzle(title: puzzle.name, fen: puzzle.fen, pgn: puzzle.pgn)
+                viewModel.loadCustomPuzzle(title: currentPuzzle.name, fen: currentPuzzle.fen, pgn: currentPuzzle.pgn)
             } label: {
                 HStack {
                     Image(systemName: "play.fill")
@@ -158,7 +161,7 @@ struct GuidedPuzzleView: View {
 
     // MARK: - Practice Mode (solve the puzzle)
 
-    private func practiceView(boardSize: CGFloat) -> some View {
+    private func practiceView(boardSize: CGFloat, currentPuzzle: GuidedPuzzle) -> some View {
         VStack(spacing: 0) {
             // Short instruction
             Text("Your turn — find the checkmate!")
@@ -202,7 +205,7 @@ struct GuidedPuzzleView: View {
                 }
 
                 Button {
-                    viewModel.loadCustomPuzzle(title: puzzle.name, fen: puzzle.fen, pgn: puzzle.pgn)
+                    viewModel.loadCustomPuzzle(title: currentPuzzle.name, fen: currentPuzzle.fen, pgn: currentPuzzle.pgn)
                     showHint = false
                     hintMoveUCI = nil
                 } label: {
@@ -245,11 +248,29 @@ struct GuidedPuzzleView: View {
             Text("Puzzle Complete")
                 .font(AppFonts.body)
                 .foregroundStyle(.white.opacity(0.8))
+
+            if currentPuzzleIndex + 1 < allPuzzles.count {
+                Button {
+                    currentPuzzleIndex += 1
+                    let next = allPuzzles[currentPuzzleIndex]
+                    viewModel.loadCustomPuzzle(title: next.name, fen: next.fen, pgn: next.pgn)
+                    showHint = false
+                    hintMoveUCI = nil
+                } label: {
+                    Text("Try Another")
+                        .font(AppFonts.captionBold)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, AppSpacing.lg)
+                        .padding(.vertical, AppSpacing.sm)
+                        .background(AppColors.accent)
+                        .clipShape(Capsule())
+                }
+                .padding(.top, AppSpacing.xs)
+            }
         }
         .padding(AppSpacing.xl)
         .background(.black.opacity(0.7))
         .clipShape(RoundedRectangle(cornerRadius: 16))
-        .allowsHitTesting(false)
     }
 
     // MARK: - Status Bar
