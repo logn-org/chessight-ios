@@ -7,12 +7,20 @@ struct BotGameView: View {
     var customFEN: String? = nil
     var initialFlip: Bool = false
     var studyTitle: String? = nil
+    var autoStart: Bool = false
 
     var body: some View {
-        if showSetup {
+        if showSetup && !autoStart {
             setupView
         } else {
             gameView
+                .onAppear {
+                    if autoStart && showSetup {
+                        showSetup = false
+                        viewModel.botDepth = 18 // Standard depth
+                        viewModel.startRandomGame(fen: customFEN, flipped: nil)
+                    }
+                }
         }
     }
 

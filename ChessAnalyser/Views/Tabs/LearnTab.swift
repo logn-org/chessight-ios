@@ -5,99 +5,11 @@ struct LearnTab: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: AppSpacing.lg) {
-                    // Sample Games
-                    learnSection(
-                        title: "Famous Games",
-                        subtitle: "Study legendary chess games move by move",
-                        icon: "theatermasks.fill",
-                        color: AppColors.accent
-                    ) {
-                        ForEach(SampleGames.all, id: \.name) { sample in
-                            NavigationLink {
-                                AnalysisView(pgn: sample.pgn)
-                            } label: {
-                                learnRow(title: sample.name, icon: "theatermasks.fill", color: AppColors.accent)
-                            }
-                        }
-                    }
+                    // Study Cards (top)
+                    studyCards
 
-                    // Openings
-                    learnSection(
-                        title: "Openings",
-                        subtitle: "Learn the most popular opening systems",
-                        icon: "flag.fill",
-                        color: AppColors.best
-                    ) {
-                        openingRow("Italian Game", moves: "1. e4 e5 2. Nf3 Nc6 3. Bc4")
-                        openingRow("Sicilian Defense", moves: "1. e4 c5")
-                        openingRow("French Defense", moves: "1. e4 e6 2. d4 d5")
-                        openingRow("Ruy Lopez", moves: "1. e4 e5 2. Nf3 Nc6 3. Bb5")
-                        openingRow("Queen's Gambit", moves: "1. d4 d5 2. c4")
-                        openingRow("King's Indian Defense", moves: "1. d4 Nf6 2. c4 g6 3. Nc3 Bg7")
-                        openingRow("Caro-Kann Defense", moves: "1. e4 c6")
-                        openingRow("English Opening", moves: "1. c4")
-                        openingRow("Pirc Defense", moves: "1. e4 d6 2. d4 Nf6 3. Nc3 g6")
-                        openingRow("Scandinavian Defense", moves: "1. e4 d5")
-                    }
-
-                    // Tactics
-                    learnSection(
-                        title: "Tactics",
-                        subtitle: "Master essential tactical patterns",
-                        icon: "bolt.fill",
-                        color: AppColors.brilliant
-                    ) {
-                        tacticRow("Pin", fen: "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4",
-                                  description: "A piece is attacked and cannot move because it would expose a more valuable piece behind it")
-                        tacticRow("Fork", fen: "r1bqkbnr/pppppppp/2n5/8/4N3/8/PPPPPPPP/R1BQKBNR w KQkq - 2 3",
-                                  description: "One piece attacks two or more enemy pieces simultaneously")
-                        tacticRow("Skewer", fen: "4k3/8/8/8/8/8/4R3/4K3 w - - 0 1",
-                                  description: "A valuable piece is attacked and forced to move, exposing a piece behind it")
-                        tacticRow("Discovered Attack", fen: "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4",
-                                  description: "Moving one piece reveals an attack from another piece behind it")
-                        tacticRow("Double Check", fen: "4k3/8/8/8/1B6/8/3N4/4K3 w - - 0 1",
-                                  description: "Two pieces give check simultaneously — the king must move")
-                    }
-
-                    // Checkmate Patterns
-                    learnSection(
-                        title: "Checkmate Patterns",
-                        subtitle: "Recognize common mating positions",
-                        icon: "crown.fill",
-                        color: AppColors.blunder
-                    ) {
-                        mateRow("Back Rank Mate", fen: "6k1/5ppp/8/8/8/8/8/R3K3 w - - 0 1",
-                                description: "Rook or queen delivers checkmate on the back rank when pawns block the king's escape")
-                        mateRow("Scholar's Mate", fen: "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 4 4",
-                                description: "Qxf7# — earliest possible checkmate targeting f7")
-                        mateRow("Smothered Mate", fen: "6rk/5Npp/8/8/8/8/8/4K3 w - - 0 1",
-                                description: "A knight delivers checkmate while the king is trapped by its own pieces")
-                        mateRow("Anastasia's Mate", fen: "5rk1/4Nppp/8/7R/8/8/8/4K3 w - - 0 1",
-                                description: "Knight and rook combine to mate along the h-file with a pawn shield")
-                        mateRow("Arabian Mate", fen: "7k/5N2/6R1/8/8/8/8/4K3 w - - 0 1",
-                                description: "A knight and rook combine to deliver checkmate in the corner")
-                    }
-
-                    // Endgames
-                    learnSection(
-                        title: "Endgames",
-                        subtitle: "Essential endgame positions and techniques",
-                        icon: "flag.checkered",
-                        color: AppColors.great
-                    ) {
-                        endgameRow("King + Queen vs King", fen: "4k3/8/8/8/8/8/8/4KQ2 w - - 0 1",
-                                   description: "The most basic checkmate — force the king to the edge")
-                        endgameRow("King + Rook vs King", fen: "4k3/8/8/8/8/8/8/4KR2 w - - 0 1",
-                                   description: "Use the rook to cut off ranks and push the king to the edge")
-                        endgameRow("King + Pawn vs King", fen: "4k3/8/8/8/4P3/8/8/4K3 w - - 0 1",
-                                   description: "The key endgame — learn opposition and the square rule")
-                        endgameRow("King + 2 Bishops vs King", fen: "4k3/8/8/8/8/8/8/2B1KB2 w - - 0 1",
-                                   description: "Two bishops force the king into a corner for checkmate")
-                        endgameRow("Lucena Position", fen: "3K4/3P1k2/8/8/8/8/1R6/8 w - - 0 1",
-                                   description: "The most important rook endgame position — building the bridge")
-                        endgameRow("Philidor Position", fen: "4k3/8/8/4P3/8/8/4r3/4K2R w - - 0 1",
-                                   description: "Defensive technique in rook endgames — keep the rook on the third rank")
-                    }
+                    // Practice Section (bot modes)
+                    practiceSection
                 }
                 .padding(.top, AppSpacing.md)
             }
@@ -110,111 +22,260 @@ struct LearnTab: View {
         }
     }
 
-    // MARK: - Section Builder
+    // MARK: - Study Cards
 
-    private func learnSection<Content: View>(
-        title: String, subtitle: String, icon: String, color: Color,
-        @ViewBuilder content: () -> Content
-    ) -> some View {
+    private var studyCards: some View {
+        VStack(spacing: AppSpacing.md) {
+            HStack(spacing: AppSpacing.md) {
+                NavigationLink {
+                    FamousGamesList()
+                } label: {
+                    studyCard(
+                        title: "Famous Games",
+                        subtitle: "Study legendary games",
+                        icon: "theatermasks.fill",
+                        color: AppColors.accent
+                    )
+                }
+
+                NavigationLink {
+                    OpeningsList()
+                } label: {
+                    studyCard(
+                        title: "Openings",
+                        subtitle: "Learn opening theory",
+                        icon: "flag.fill",
+                        color: AppColors.best
+                    )
+                }
+            }
+        }
+        .padding(.horizontal, AppSpacing.md)
+    }
+
+    private func studyCard(title: String, subtitle: String, icon: String, color: Color) -> some View {
+        VStack(spacing: AppSpacing.sm) {
+            Image(systemName: icon)
+                .font(.system(size: 28))
+                .foregroundStyle(color)
+            Text(title)
+                .font(AppFonts.subtitle)
+                .foregroundStyle(AppColors.textPrimary)
+            Text(subtitle)
+                .font(AppFonts.small)
+                .foregroundStyle(AppColors.textMuted)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 120)
+        .background(AppColors.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    // MARK: - Practice Section
+
+    private var practiceSection: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.md) {
+            Text("Practice")
+                .font(.system(size: 20, weight: .bold))
+                .foregroundStyle(AppColors.textPrimary)
+                .padding(.horizontal, AppSpacing.md)
+
+            Text("Play against Stockfish from specific positions")
+                .font(AppFonts.small)
+                .foregroundStyle(AppColors.textMuted)
+                .padding(.horizontal, AppSpacing.md)
+
+            // Tactics
+            practiceGroup(title: "Tactics", icon: "bolt.fill", color: AppColors.brilliant, items: [
+                PracticeItem(name: "Pin", fens: [
+                    "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 0 1",
+                    "r2qkbnr/ppp2ppp/2np4/4p1B1/4P1b1/5N2/PPPP1PPP/RN1QKB1R w KQkq - 0 1",
+                    "rnbqk2r/pppp1ppp/4pn2/8/1bPP4/2N5/PP2PPPP/R1BQKBNR w KQkq - 0 1",
+                ]),
+                PracticeItem(name: "Fork", fens: [
+                    "r1bqkbnr/pppppppp/2n5/8/4N3/8/PPPPPPPP/R1BQKBNR w KQkq - 0 1",
+                    "r1bqkb1r/pppppppp/2n2n2/8/3NP3/8/PPPP1PPP/RNBQKB1R w KQkq - 0 1",
+                    "r2qkbnr/ppp1pppp/2n5/3p4/3PP1b1/5N2/PPP2PPP/RNBQKB1R w KQkq - 0 1",
+                ]),
+                PracticeItem(name: "Skewer", fens: [
+                    "4k3/8/8/8/8/4R3/8/4K3 w - - 0 1",
+                    "6k1/8/8/8/8/8/B7/4K3 w - - 0 1",
+                ]),
+                PracticeItem(name: "Discovered Attack", fens: [
+                    "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 1",
+                    "rnbqkb1r/ppp1pppp/5n2/3p4/3PP3/8/PPP2PPP/RNBQKBNR w KQkq - 0 1",
+                ]),
+            ])
+
+            // Checkmate Patterns
+            practiceGroup(title: "Checkmate Patterns", icon: "crown.fill", color: AppColors.blunder, items: [
+                PracticeItem(name: "Back Rank Mate", fens: [
+                    "6k1/5ppp/8/8/8/8/8/R3K3 w - - 0 1",
+                    "3r2k1/5ppp/8/8/8/8/5PPP/6K1 b - - 0 1",
+                    "r5k1/5ppp/8/8/8/8/5PPP/4R1K1 w - - 0 1",
+                ]),
+                PracticeItem(name: "Smothered Mate", fens: [
+                    "6rk/5Npp/8/8/8/8/8/4K3 w - - 0 1",
+                    "r4rk1/5Npp/8/8/8/8/6PP/6K1 w - - 0 1",
+                ]),
+                PracticeItem(name: "Arabian Mate", fens: [
+                    "7k/5N2/6R1/8/8/8/8/4K3 w - - 0 1",
+                    "k7/2N5/1R6/8/8/8/8/4K3 w - - 0 1",
+                ]),
+                PracticeItem(name: "Scholar's Mate Setup", fens: [
+                    "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
+                ]),
+            ])
+
+            // Endgames
+            practiceGroup(title: "Endgames", icon: "flag.checkered", color: AppColors.great, items: [
+                PracticeItem(name: "King + Queen vs King", fens: [
+                    "4k3/8/8/8/8/8/8/4KQ2 w - - 0 1",
+                    "8/8/3k4/8/8/8/1Q6/4K3 w - - 0 1",
+                    "k7/8/8/8/8/8/6Q1/4K3 w - - 0 1",
+                ]),
+                PracticeItem(name: "King + Rook vs King", fens: [
+                    "4k3/8/8/8/8/8/8/R3K3 w - - 0 1",
+                    "8/8/4k3/8/8/8/R7/4K3 w - - 0 1",
+                    "k7/8/8/8/8/8/7R/4K3 w - - 0 1",
+                ]),
+                PracticeItem(name: "King + Pawn vs King", fens: [
+                    "4k3/8/8/8/4P3/8/8/4K3 w - - 0 1",
+                    "8/8/4k3/8/4P3/4K3/8/8 w - - 0 1",
+                    "8/4k3/8/4P3/4K3/8/8/8 w - - 0 1",
+                ]),
+                PracticeItem(name: "King + 2 Bishops vs King", fens: [
+                    "4k3/8/8/8/8/8/8/2B1KB2 w - - 0 1",
+                    "k7/8/8/8/8/8/8/2B1KB2 w - - 0 1",
+                ]),
+                PracticeItem(name: "Rook Endgame", fens: [
+                    "8/5k2/8/4P3/8/8/8/4K2R w - - 0 1",
+                    "8/8/4k3/4P3/8/8/4r3/4K2R w - - 0 1",
+                ]),
+            ])
+        }
+    }
+
+    // MARK: - Practice Group
+
+    private func practiceGroup(title: String, icon: String, color: Color, items: [PracticeItem]) -> some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
             HStack(spacing: AppSpacing.sm) {
                 Image(systemName: icon)
                     .foregroundStyle(color)
-                    .font(.title3)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(AppFonts.subtitle)
-                        .foregroundStyle(AppColors.textPrimary)
-                    Text(subtitle)
-                        .font(AppFonts.small)
-                        .foregroundStyle(AppColors.textMuted)
-                }
+                Text(title)
+                    .font(AppFonts.bodyBold)
+                    .foregroundStyle(AppColors.textPrimary)
             }
             .padding(.horizontal, AppSpacing.md)
 
-            content()
-        }
-    }
-
-    // MARK: - Row Types
-
-    private func learnRow(title: String, icon: String, color: Color) -> some View {
-        HStack {
-            Image(systemName: icon)
-                .foregroundStyle(color)
-                .frame(width: 24)
-            Text(title)
-                .font(AppFonts.body)
-                .foregroundStyle(AppColors.textPrimary)
-            Spacer()
-            Image(systemName: "chevron.right")
-                .font(AppFonts.caption)
-                .foregroundStyle(AppColors.textMuted)
-        }
-        .padding(AppSpacing.md)
-        .background(AppColors.surface)
-        .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
-        .padding(.horizontal, AppSpacing.md)
-    }
-
-    private func openingRow(_ name: String, moves: String) -> some View {
-        let pgn = "[Event \"\(name)\"]\n[White \"White\"]\n[Black \"Black\"]\n[Result \"*\"]\n\n\(moves) *"
-        return NavigationLink {
-            AnalysisView(pgn: pgn, studyMode: true, studyTitle: name)
-        } label: {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(name)
-                        .font(AppFonts.body)
-                        .foregroundStyle(AppColors.textPrimary)
-                    Text(moves)
-                        .font(AppFonts.small)
-                        .foregroundStyle(AppColors.textMuted)
-                        .lineLimit(1)
+            ForEach(items, id: \.name) { item in
+                NavigationLink {
+                    BotGameView(
+                        customFEN: item.fens.randomElement()!,
+                        studyTitle: item.name,
+                        autoStart: true
+                    )
+                } label: {
+                    HStack {
+                        Text(item.name)
+                            .font(AppFonts.body)
+                            .foregroundStyle(AppColors.textPrimary)
+                        Spacer()
+                        Image(systemName: "play.circle.fill")
+                            .foregroundStyle(color.opacity(0.7))
+                        Image(systemName: "chevron.right")
+                            .font(AppFonts.caption)
+                            .foregroundStyle(AppColors.textMuted)
+                    }
+                    .padding(AppSpacing.md)
+                    .background(AppColors.surface)
+                    .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
+                    .padding(.horizontal, AppSpacing.md)
                 }
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(AppFonts.caption)
-                    .foregroundStyle(AppColors.textMuted)
             }
-            .padding(AppSpacing.md)
-            .background(AppColors.surface)
-            .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
-            .padding(.horizontal, AppSpacing.md)
         }
     }
+}
 
-    private func tacticRow(_ name: String, fen: String, description: String) -> some View {
-        NavigationLink {
-            BotGameView(customFEN: fen, studyTitle: name)
-        } label: {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(name)
-                        .font(AppFonts.bodyBold)
-                        .foregroundStyle(AppColors.textPrimary)
-                    Text(description)
-                        .font(AppFonts.small)
-                        .foregroundStyle(AppColors.textMuted)
-                        .lineLimit(2)
+// MARK: - Data
+
+struct PracticeItem {
+    let name: String
+    let fens: [String]
+}
+
+// MARK: - Famous Games List
+
+struct FamousGamesList: View {
+    var body: some View {
+        List {
+            ForEach(SampleGames.all, id: \.name) { sample in
+                NavigationLink {
+                    AnalysisView(pgn: sample.pgn)
+                } label: {
+                    HStack {
+                        Image(systemName: "theatermasks.fill")
+                            .foregroundStyle(AppColors.accent)
+                            .frame(width: 24)
+                        Text(sample.name)
+                            .font(AppFonts.body)
+                            .foregroundStyle(AppColors.textPrimary)
+                    }
                 }
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(AppFonts.caption)
-                    .foregroundStyle(AppColors.textMuted)
+                .listRowBackground(AppColors.surface)
             }
-            .padding(AppSpacing.md)
-            .background(AppColors.surface)
-            .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
-            .padding(.horizontal, AppSpacing.md)
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(AppColors.background)
+        .navigationTitle("Famous Games")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
     }
+}
 
-    private func mateRow(_ name: String, fen: String, description: String) -> some View {
-        tacticRow(name, fen: fen, description: description)
-    }
+// MARK: - Openings List
 
-    private func endgameRow(_ name: String, fen: String, description: String) -> some View {
-        tacticRow(name, fen: fen, description: description)
+struct OpeningsList: View {
+    private let openings: [(name: String, moves: String)] = [
+        ("Italian Game", "1. e4 e5 2. Nf3 Nc6 3. Bc4"),
+        ("Sicilian Defense", "1. e4 c5"),
+        ("French Defense", "1. e4 e6 2. d4 d5"),
+        ("Ruy Lopez", "1. e4 e5 2. Nf3 Nc6 3. Bb5"),
+        ("Queen's Gambit", "1. d4 d5 2. c4"),
+        ("King's Indian Defense", "1. d4 Nf6 2. c4 g6 3. Nc3 Bg7"),
+        ("Caro-Kann Defense", "1. e4 c6"),
+        ("English Opening", "1. c4"),
+        ("Pirc Defense", "1. e4 d6 2. d4 Nf6 3. Nc3 g6"),
+        ("Scandinavian Defense", "1. e4 d5"),
+    ]
+
+    var body: some View {
+        List {
+            ForEach(openings, id: \.name) { opening in
+                let pgn = "[Event \"\(opening.name)\"]\n[White \"White\"]\n[Black \"Black\"]\n[Result \"*\"]\n\n\(opening.moves) *"
+                NavigationLink {
+                    AnalysisView(pgn: pgn, studyMode: true, studyTitle: opening.name)
+                } label: {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(opening.name)
+                            .font(AppFonts.body)
+                            .foregroundStyle(AppColors.textPrimary)
+                        Text(opening.moves)
+                            .font(AppFonts.small)
+                            .foregroundStyle(AppColors.textMuted)
+                    }
+                }
+                .listRowBackground(AppColors.surface)
+            }
+        }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(AppColors.background)
+        .navigationTitle("Openings")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
     }
 }
