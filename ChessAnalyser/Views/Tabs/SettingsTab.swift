@@ -136,19 +136,6 @@ struct SettingsTab: View {
                     }
                     .listRowBackground(AppColors.surface)
 
-                    Link(destination: URL(string: "https://tally.so/r/44olMo") ?? URL(fileURLWithPath: "/")) {
-                        HStack {
-                            Image(systemName: "lightbulb.fill")
-                                .foregroundStyle(AppColors.inaccuracy)
-                            Text("Feature Request & Feedback")
-                                .foregroundStyle(AppColors.textPrimary)
-                            Spacer()
-                            Image(systemName: "arrow.up.right.square")
-                                .foregroundStyle(AppColors.accent)
-                        }
-                    }
-                    .listRowBackground(AppColors.surface)
-
                     Link(destination: URL(string: "https://logn-org.github.io/policies/chessight/privacy-policy.html") ?? URL(fileURLWithPath: "/")) {
                         HStack {
                             Text("Privacy Policy")
@@ -168,6 +155,48 @@ struct SettingsTab: View {
                                 .foregroundStyle(AppColors.textPrimary)
                             Spacer()
                             Image(systemName: "chevron.right")
+                                .foregroundStyle(AppColors.textMuted)
+                        }
+                    }
+                    .listRowBackground(AppColors.surface)
+                }
+
+                Section("Help & Feedback") {
+                    Link(destination: URL(string: "https://tally.so/r/vGO5NQ") ?? URL(fileURLWithPath: "/")) {
+                        HStack {
+                            Image(systemName: "ladybug.fill")
+                                .foregroundStyle(AppColors.blunder)
+                            Text("Report a Bug")
+                                .foregroundStyle(AppColors.textPrimary)
+                            Spacer()
+                            Image(systemName: "arrow.up.right.square")
+                                .foregroundStyle(AppColors.accent)
+                        }
+                    }
+                    .listRowBackground(AppColors.surface)
+
+                    Link(destination: URL(string: "https://tally.so/r/44olMo") ?? URL(fileURLWithPath: "/")) {
+                        HStack {
+                            Image(systemName: "lightbulb.fill")
+                                .foregroundStyle(AppColors.inaccuracy)
+                            Text("Request a Feature")
+                                .foregroundStyle(AppColors.textPrimary)
+                            Spacer()
+                            Image(systemName: "arrow.up.right.square")
+                                .foregroundStyle(AppColors.accent)
+                        }
+                    }
+                    .listRowBackground(AppColors.surface)
+
+                    Link(destination: URL(string: "mailto:help@chessight.app") ?? URL(fileURLWithPath: "/")) {
+                        HStack {
+                            Image(systemName: "envelope.fill")
+                                .foregroundStyle(AppColors.great)
+                            Text("Contact Us")
+                                .foregroundStyle(AppColors.textPrimary)
+                            Spacer()
+                            Text("help@chessight.app")
+                                .font(AppFonts.caption)
                                 .foregroundStyle(AppColors.textMuted)
                         }
                     }
