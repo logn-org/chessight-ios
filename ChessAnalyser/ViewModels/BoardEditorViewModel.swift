@@ -168,67 +168,25 @@ final class BoardEditorViewModel {
         isFlipped = sideToMove == .black
     }
 
-    func validatePosition() -> String? {
-        var wK = 0, bK = 0, wQ = 0, bQ = 0, wR = 0, bR = 0, wB = 0, bB = 0, wN = 0, bN = 0, wP = 0, bP = 0
-
+    /// Minimum check: both kings must exist for a playable game
+    func validatePlayable() -> String? {
+        var wK = 0, bK = 0
         for rank in 0..<8 {
             for file in 0..<8 {
-                guard let piece = board.piece(at: Square(file: file, rank: rank)) else { continue }
-                let isWhite = piece.color == .white
-                switch piece.type {
-                case .king:   if isWhite { wK += 1 } else { bK += 1 }
-                case .queen:  if isWhite { wQ += 1 } else { bQ += 1 }
-                case .rook:   if isWhite { wR += 1 } else { bR += 1 }
-                case .bishop: if isWhite { wB += 1 } else { bB += 1 }
-                case .knight: if isWhite { wN += 1 } else { bN += 1 }
-                case .pawn:   if isWhite { wP += 1 } else { bP += 1 }
+                if let piece = board.piece(at: Square(file: file, rank: rank)), piece.type == .king {
+                    if piece.color == .white { wK += 1 } else { bK += 1 }
                 }
             }
         }
-
-        // Kings
         if wK != 1 { return "Position must have exactly one white king" }
         if bK != 1 { return "Position must have exactly one black king" }
-
-        // Pawns
-        if wP > 8 { return "White has too many pawns (max 8)" }
-        if bP > 8 { return "Black has too many pawns (max 8)" }
-
-        // Total pieces per side
-        let whitePieces = wK + wQ + wR + wB + wN + wP
-        let blackPieces = bK + bQ + bR + bB + bN + bP
-        if whitePieces > 16 { return "White has too many pieces (max 16)" }
-        if blackPieces > 16 { return "Black has too many pieces (max 16)" }
-
-        // Promotion validity: extra pieces beyond starting count must come from promoted pawns
-        // Starting: 1Q, 2R, 2B, 2N. Extra = pieces beyond that count.
-        // Extra pieces + remaining pawns cannot exceed 8 (original pawn count)
-        let whiteExtraPromotions = max(0, wQ - 1) + max(0, wR - 2) + max(0, wB - 2) + max(0, wN - 2)
-        if whiteExtraPromotions + wP > 8 {
-            return "White has too many pieces — extra rooks/queens/bishops/knights require promoted pawns"
-        }
-        let blackExtraPromotions = max(0, bQ - 1) + max(0, bR - 2) + max(0, bB - 2) + max(0, bN - 2)
-        if blackExtraPromotions + bP > 8 {
-            return "Black has too many pieces — extra rooks/queens/bishops/knights require promoted pawns"
-        }
-
-        // Pawns on rank 1 or 8
-        for file in 0..<8 {
-            if let p = board.piece(at: Square(file: file, rank: 0)), p.type == .pawn {
-                return "Pawns cannot be on rank 1"
-            }
-            if let p = board.piece(at: Square(file: file, rank: 7)), p.type == .pawn {
-                return "Pawns cannot be on rank 8"
-            }
-        }
-
         return nil
     }
 
     /// Whether the current position is safe for Stockfish analysis
-    /// (standard chess piece limits — no impossible configurations)
     var isEngineCompatible: Bool {
-        validatePosition() == nil
+        let board = ChessBoard(fen: currentFEN)
+        return board.isValidForEngine()
     }
 
     // MARK: - Chess960 Shuffle

@@ -273,53 +273,71 @@ struct BoardEditorView: View {
     }
 
     private var editorPlayButtons: some View {
-        HStack(spacing: AppSpacing.sm) {
-            Button {
-                if let error = viewModel.validatePosition() {
-                    validationError = error
-                } else {
-                    fenToPlay = viewModel.currentFEN
-                    Analytics.boardEditorUsed(action: "free_play", loadedFEN: false)
-                    navigateToFreePlay = true
+        VStack(spacing: AppSpacing.sm) {
+            // Engine compatibility warning
+            if !viewModel.isEngineCompatible {
+                HStack(spacing: AppSpacing.sm) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(AppColors.inaccuracy)
+                        .font(.system(size: 13))
+                    Text("Engine analysis not available for this board")
+                        .font(AppFonts.small)
+                        .foregroundStyle(AppColors.inaccuracy)
+                    Spacer()
                 }
-            } label: {
-                Label("Free Play", systemImage: "play.fill")
-                    .font(AppFonts.captionBold)
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, AppSpacing.md)
-                    .background(AppColors.accent)
-                    .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
+                .padding(.horizontal, AppSpacing.md)
             }
 
-            Button {
-                if let error = viewModel.validatePosition() {
-                    validationError = error
-                } else {
-                    fenToPlay = viewModel.currentFEN
-                    Analytics.boardEditorUsed(action: "bot", loadedFEN: false)
-                    navigateToBotGame = true
+            HStack(spacing: AppSpacing.sm) {
+                Button {
+                    if let error = viewModel.validatePlayable() {
+                        validationError = error
+                    } else {
+                        fenToPlay = viewModel.currentFEN
+                        Analytics.boardEditorUsed(action: "free_play", loadedFEN: viewModel.didLoadFEN)
+                        navigateToFreePlay = true
+                    }
+                } label: {
+                    Label("Free Play", systemImage: "play.fill")
+                        .font(AppFonts.captionBold)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, AppSpacing.md)
+                        .background(AppColors.accent)
+                        .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
                 }
-            } label: {
-                Label("vs Bot", systemImage: "cpu")
-                    .font(AppFonts.captionBold)
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, AppSpacing.md)
-                    .background(AppColors.great)
-                    .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
-            }
 
-            Button { showRules = true } label: {
-                Image(systemName: "info.circle")
-                    .font(.title3)
-                    .foregroundStyle(AppColors.textMuted)
-                    .padding(AppSpacing.md)
-                    .background(AppColors.surface)
-                    .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
+                Button {
+                    if let error = viewModel.validatePlayable() {
+                        validationError = error
+                    } else if !viewModel.isEngineCompatible {
+                        validationError = "Engine analysis is not available for this board. Use Free Play instead."
+                    } else {
+                        fenToPlay = viewModel.currentFEN
+                        Analytics.boardEditorUsed(action: "bot", loadedFEN: viewModel.didLoadFEN)
+                        navigateToBotGame = true
+                    }
+                } label: {
+                    Label("vs Bot", systemImage: "cpu")
+                        .font(AppFonts.captionBold)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, AppSpacing.md)
+                        .background(viewModel.isEngineCompatible ? AppColors.great : AppColors.surfaceLight)
+                        .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
+                }
+
+                Button { showRules = true } label: {
+                    Image(systemName: "info.circle")
+                        .font(.title3)
+                        .foregroundStyle(AppColors.textMuted)
+                        .padding(AppSpacing.md)
+                        .background(AppColors.surface)
+                        .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
+                }
             }
+            .padding(.horizontal, AppSpacing.md)
         }
-        .padding(.horizontal, AppSpacing.md)
     }
 
     // MARK: - Mode Selector
