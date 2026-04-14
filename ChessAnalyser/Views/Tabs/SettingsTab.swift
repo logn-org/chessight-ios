@@ -163,48 +163,55 @@ struct SettingsTab: View {
 
                 Section("Help & Feedback") {
                     Link(destination: URL(string: "https://tally.so/r/vGO5NQ") ?? URL(fileURLWithPath: "/")) {
-                        HStack {
+                        HStack(spacing: AppSpacing.md) {
                             Image(systemName: "ladybug.fill")
                                 .foregroundStyle(AppColors.blunder)
+                                .frame(width: 24)
                             Text("Report a Bug")
                                 .foregroundStyle(AppColors.textPrimary)
                             Spacer()
                             Image(systemName: "arrow.up.right.square")
-                                .foregroundStyle(AppColors.accent)
+                                .font(AppFonts.caption)
+                                .foregroundStyle(AppColors.textMuted)
                         }
                     }
                     .listRowBackground(AppColors.surface)
 
                     Link(destination: URL(string: "https://tally.so/r/44olMo") ?? URL(fileURLWithPath: "/")) {
-                        HStack {
+                        HStack(spacing: AppSpacing.md) {
                             Image(systemName: "lightbulb.fill")
                                 .foregroundStyle(AppColors.inaccuracy)
+                                .frame(width: 24)
                             Text("Request a Feature")
                                 .foregroundStyle(AppColors.textPrimary)
                             Spacer()
                             Image(systemName: "arrow.up.right.square")
-                                .foregroundStyle(AppColors.accent)
+                                .font(AppFonts.caption)
+                                .foregroundStyle(AppColors.textMuted)
                         }
                     }
                     .listRowBackground(AppColors.surface)
 
                     Link(destination: URL(string: "https://tally.so/r/yPE5x0") ?? URL(fileURLWithPath: "/")) {
-                        HStack {
+                        HStack(spacing: AppSpacing.md) {
                             Image(systemName: "star.fill")
                                 .foregroundStyle(AppColors.accent)
+                                .frame(width: 24)
                             Text("Rate Chessight")
                                 .foregroundStyle(AppColors.textPrimary)
                             Spacer()
                             Image(systemName: "arrow.up.right.square")
-                                .foregroundStyle(AppColors.accent)
+                                .font(AppFonts.caption)
+                                .foregroundStyle(AppColors.textMuted)
                         }
                     }
                     .listRowBackground(AppColors.surface)
 
                     Link(destination: URL(string: "mailto:help@chessight.app") ?? URL(fileURLWithPath: "/")) {
-                        HStack {
+                        HStack(spacing: AppSpacing.md) {
                             Image(systemName: "envelope.fill")
                                 .foregroundStyle(AppColors.great)
+                                .frame(width: 24)
                             Text("Contact Us")
                                 .foregroundStyle(AppColors.textPrimary)
                             Spacer()
