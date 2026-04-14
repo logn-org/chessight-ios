@@ -38,31 +38,19 @@ struct LearnTab: View {
                 }
             }
 
-            // Row 2: Practice
+            // Row 2: Checkmates + Endgames
             HStack(spacing: AppSpacing.md) {
-                NavigationLink {
-                    GuidedPuzzleCategoryList(title: "Tactics", categories: tacticPuzzles, orderedKeys: ["Pin", "Fork", "Skewer", "Discovered Attack", "Double Check"])
-                } label: {
-                    studyCard(title: "Tactics", subtitle: "Pins, forks, skewers", icon: "bolt.fill", color: AppColors.brilliant)
-                }
-
                 NavigationLink {
                     GuidedPuzzleCategoryList(title: "Checkmates", categories: checkmatePuzzles, orderedKeys: ["Epaulette Mate", "Swallow's Tail Mate", "Cozio's Mate", "Kill Box Mate", "Triangle Mate", "Railroad Mate", "Max Lange Mate", "Balestra Mate", "Bucking Bronco Mate", "Sneaky Stallion Mate", "Damiano's Mate", "Lolli's Checkmate", "Back Rank Mate", "Blind Swine Mate", "Lawnmower Mate", "h-File Mate", "Opera Mate", "Mayet's Mate", "Reti's Mate", "Pillsbury Mate", "Morphy's Mate", "Greco Mate", "Corner Mate", "Anastasia's Mate", "Arabian Mate", "Vukovic Mate", "Hook Mate", "Anderssen's Mate", "Diagonal Corridor Mate", "Bombardiers' Mate", "Boden's Mate", "Smothered Mate", "Two Knights Mate", "Suffocation Mate", "Collaboration Mate", "Blackburne's Mate", "David and Goliath Mate"])
                 } label: {
-                    studyCard(title: "Checkmates", subtitle: "Mating patterns", icon: "crown.fill", color: AppColors.blunder)
+                    studyCard(title: "Checkmates", subtitle: "37 mating patterns", icon: "crown.fill", color: AppColors.blunder)
                 }
-            }
 
-            // Row 3: Endgames
-            HStack(spacing: AppSpacing.md) {
                 NavigationLink {
                     PracticeCategoryList(title: "Endgames", items: endgameItems)
                 } label: {
-                    studyCard(title: "Endgames", subtitle: "Win & defend endgames", icon: "flag.checkered", color: AppColors.great)
+                    studyCard(title: "Endgames", subtitle: "Win & defend", icon: "flag.checkered", color: AppColors.great)
                 }
-
-                // Placeholder for future content
-                Color.clear.frame(maxWidth: .infinity, maxHeight: 120)
             }
         }
         .padding(.horizontal, AppSpacing.md)
