@@ -38,7 +38,13 @@ actor StockfishActor {
 
     /// Analyze a position with a time limit (ms). Fast for real-time use.
     func analyzePositionTimed(fen: String, moveTimeMs: Int) async -> PositionAnalysis {
-        // Ensure clean state: stop any running search, drain stale output, sync
+        // Validate position before sending to Stockfish — invalid positions crash the engine
+        let board = ChessBoard(fen: fen)
+        guard board.isValidForEngine() else {
+            CrashLogger.logEngine("Skipping analysis — invalid position for engine: \(fen)")
+            return PositionAnalysis(eval: .initial, bestMove: "", lines: [])
+        }
+
         await syncEngine()
         bridge.send(command: UCICommand.position(fen: fen))
         bridge.send(command: UCICommand.go(moveTime: moveTimeMs))
@@ -47,6 +53,12 @@ actor StockfishActor {
 
     /// Analyze a position to a fixed depth. More accurate but slower.
     func analyzePositionDepth(fen: String, depth: Int) async -> PositionAnalysis {
+        let board = ChessBoard(fen: fen)
+        guard board.isValidForEngine() else {
+            CrashLogger.logEngine("Skipping analysis — invalid position for engine: \(fen)")
+            return PositionAnalysis(eval: .initial, bestMove: "", lines: [])
+        }
+
         await syncEngine()
         bridge.send(command: UCICommand.position(fen: fen))
         bridge.send(command: UCICommand.go(depth: depth))

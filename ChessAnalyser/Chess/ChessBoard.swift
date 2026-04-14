@@ -504,6 +504,35 @@ struct ChessBoard {
         return false
     }
 
+    // MARK: - Engine Compatibility Check
+
+    /// Returns true if this position has valid piece counts for Stockfish analysis.
+    /// Positions with impossible piece configurations (e.g. 3 rooks + 8 pawns) crash the engine.
+    func isValidForEngine() -> Bool {
+        var wK = 0, bK = 0, wQ = 0, bQ = 0, wR = 0, bR = 0, wB = 0, bB = 0, wN = 0, bN = 0, wP = 0, bP = 0
+        for rank in 0..<8 {
+            for file in 0..<8 {
+                guard let piece = squares[rank][file] else { continue }
+                let w = piece.color == .white
+                switch piece.type {
+                case .king:   if w { wK += 1 } else { bK += 1 }
+                case .queen:  if w { wQ += 1 } else { bQ += 1 }
+                case .rook:   if w { wR += 1 } else { bR += 1 }
+                case .bishop: if w { wB += 1 } else { bB += 1 }
+                case .knight: if w { wN += 1 } else { bN += 1 }
+                case .pawn:   if w { wP += 1 } else { bP += 1 }
+                }
+            }
+        }
+        // Basic checks
+        guard wK == 1, bK == 1, wP <= 8, bP <= 8 else { return false }
+        // Promotion validity
+        let whiteExtra = max(0, wQ-1) + max(0, wR-2) + max(0, wB-2) + max(0, wN-2)
+        let blackExtra = max(0, bQ-1) + max(0, bR-2) + max(0, bB-2) + max(0, bN-2)
+        guard whiteExtra + wP <= 8, blackExtra + bP <= 8 else { return false }
+        return true
+    }
+
     // MARK: - Insufficient Material Detection
 
     /// Returns true if neither side can force checkmate.

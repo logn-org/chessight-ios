@@ -233,6 +233,14 @@ struct BoardEditorView: View {
                     .background(AppColors.surface)
                     .clipShape(Capsule())
             }
+
+            Button { viewModel.shuffleChess960() } label: {
+                Image(systemName: "shuffle")
+                    .padding(.horizontal, AppSpacing.sm)
+                    .padding(.vertical, AppSpacing.sm)
+                    .background(AppColors.surface)
+                    .clipShape(Capsule())
+            }
         }
         .font(AppFonts.captionBold)
         .foregroundStyle(AppColors.textPrimary)
@@ -355,17 +363,23 @@ struct BoardEditorView: View {
                 Section("Required") {
                     ruleRow(icon: "crown.fill", color: .white, text: "Exactly one white king")
                     ruleRow(icon: "crown.fill", color: .black, text: "Exactly one black king")
-                    ruleRow(icon: "number", color: AppColors.accent, text: "Maximum 32 pieces total")
+                    ruleRow(icon: "number", color: AppColors.accent, text: "Maximum 16 pieces per side")
+                    ruleRow(icon: "number", color: AppColors.accent, text: "Maximum 8 pawns per side")
+                    ruleRow(icon: "xmark.circle", color: AppColors.blunder, text: "No pawns on rank 1 or 8")
                 }
 
-                Section("Recommended") {
-                    ruleRow(icon: "checkmark.shield", color: AppColors.best, text: "Pawns should not be on rank 1 or 8")
-                    ruleRow(icon: "checkmark.shield", color: AppColors.best, text: "At most 8 pawns per side")
+                Section("Piece Limits (for engine analysis)") {
+                    ruleRow(icon: "checkmark.shield", color: AppColors.best, text: "Queens: 1 + promoted pawns")
+                    ruleRow(icon: "checkmark.shield", color: AppColors.best, text: "Rooks: 2 + promoted pawns")
+                    ruleRow(icon: "checkmark.shield", color: AppColors.best, text: "Bishops: 2 + promoted pawns")
+                    ruleRow(icon: "checkmark.shield", color: AppColors.best, text: "Knights: 2 + promoted pawns")
+                    ruleRow(icon: "exclamationmark.triangle", color: AppColors.inaccuracy, text: "Extra pieces + pawns cannot exceed 8")
                 }
 
                 Section("Tips") {
                     ruleRow(icon: "lightbulb", color: AppColors.inaccuracy, text: "Set the correct side to move")
                     ruleRow(icon: "lightbulb", color: AppColors.inaccuracy, text: "Use 'Reset' for standard position")
+                    ruleRow(icon: "shuffle", color: AppColors.accent, text: "Use 'Shuffle' for Chess960 position")
                 }
             }
             .listStyle(.insetGrouped)
