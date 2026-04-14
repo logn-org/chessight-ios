@@ -218,9 +218,6 @@ struct GuidedPuzzleCategoryList: View {
                                     .font(AppFonts.small)
                                     .foregroundStyle(AppColors.textMuted)
                                     .lineLimit(2)
-                                Text("\(puzzles.count) puzzles")
-                                    .font(AppFonts.small)
-                                    .foregroundStyle(AppColors.accent)
                             }
                         }
                         .padding(.vertical, AppSpacing.xs)

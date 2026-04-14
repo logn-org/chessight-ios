@@ -30,16 +30,23 @@ struct GuidedPuzzleView: View {
                 statusBar
 
                 // Board
-                InteractiveBoardView(
-                    board: viewModel.board,
-                    selectedSquare: viewModel.selectedSquare,
-                    legalMoveTargets: viewModel.legalMoveTargets,
-                    lastMove: lastMove,
-                    arrows: hintArrows,
-                    showCoordinates: appState.engineConfig.showBoardCoordinates,
-                    flipped: viewModel.isFlipped,
-                    onTapSquare: { viewModel.tapSquare($0) }
-                )
+                ZStack {
+                    InteractiveBoardView(
+                        board: viewModel.board,
+                        selectedSquare: viewModel.selectedSquare,
+                        legalMoveTargets: viewModel.legalMoveTargets,
+                        lastMove: lastMove,
+                        arrows: hintArrows,
+                        showCoordinates: appState.engineConfig.showBoardCoordinates,
+                        flipped: viewModel.isFlipped,
+                        onTapSquare: { viewModel.tapSquare($0) }
+                    )
+
+                    // Checkmate / completion overlay
+                    if viewModel.puzzleCompleted {
+                        completionOverlay
+                    }
+                }
                 .frame(width: boardSize, height: boardSize)
                 .padding(.horizontal, AppSpacing.sm)
                 .overlay(
@@ -67,17 +74,6 @@ struct GuidedPuzzleView: View {
                         Image(systemName: showHint ? "lightbulb.fill" : "lightbulb")
                             .foregroundStyle(showHint ? AppColors.accent : AppColors.textPrimary)
                     }
-
-                    if allPuzzles.count > 1 {
-                        Button { loadRandomPuzzle() } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: "shuffle")
-                                Text("Next")
-                                    .font(AppFonts.captionBold)
-                            }
-                            .foregroundStyle(AppColors.accent)
-                        }
-                    }
                 }
                 .font(.title3)
                 .foregroundStyle(AppColors.textPrimary)
@@ -94,6 +90,26 @@ struct GuidedPuzzleView: View {
             viewModel.loadCustomPuzzle(title: puzzle.name, fen: puzzle.fen, pgn: puzzle.pgn)
             Analytics.screenViewed("guided_puzzle")
         }
+    }
+
+    // MARK: - Completion Overlay
+
+    private var completionOverlay: some View {
+        VStack(spacing: AppSpacing.sm) {
+            Image(systemName: "crown.fill")
+                .font(.system(size: 36))
+                .foregroundStyle(AppColors.accent)
+            Text("Checkmate!")
+                .font(.system(size: 20, weight: .bold))
+                .foregroundStyle(.white)
+            Text("Puzzle Complete")
+                .font(AppFonts.body)
+                .foregroundStyle(.white.opacity(0.8))
+        }
+        .padding(AppSpacing.xl)
+        .background(.black.opacity(0.7))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .allowsHitTesting(false)
     }
 
     // MARK: - Status Bar
@@ -158,12 +174,5 @@ struct GuidedPuzzleView: View {
         } else {
             hintMoveUCI = nil
         }
-    }
-
-    private func loadRandomPuzzle() {
-        guard let newPuzzle = allPuzzles.randomElement() else { return }
-        viewModel.loadCustomPuzzle(title: newPuzzle.name, fen: newPuzzle.fen, pgn: newPuzzle.pgn)
-        showHint = false
-        hintMoveUCI = nil
     }
 }

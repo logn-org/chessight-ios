@@ -69,26 +69,12 @@ enum GuidedPuzzles {
 
     static let epauletteMates: [GuidedPuzzle] = [
         GuidedPuzzle(
-            name: "Classic Epaulette Mate",
+            name: "Epaulette Mate",
             description: "Pieces on both sides trap the king like shoulder epaulettes",
             fen: "7r/6pk/4Q2p/2q1p3/8/7R/5PPP/6K1 w - - 0 1",
             pgn: "1. Rxh6+ gxh6 2. Qf7#",
             previewFEN: "3rkr2/8/4Q3/8/8/8/8/4K3 w - - 0 1",
             detailed: "The Epaulette Mate resembles decorative shoulder pieces on a military uniform. The king is checked and has no escape — pieces on either side block its retreat, looking like epaulettes on the king's shoulders."
-        ),
-        GuidedPuzzle(
-            name: "Epaulette with Rooks",
-            description: "Rooks on each side block the king's escape",
-            fen: "3rkr2/8/4Q3/8/8/8/8/4K3 w - - 0 1",
-            pgn: "1. Qe7#",
-            detailed: "The black king is trapped between its own rooks on d8 and f8. The queen delivers checkmate from e7 — the king has no escape squares."
-        ),
-        GuidedPuzzle(
-            name: "Epaulette with Queen",
-            description: "Queen and rook create the epaulette pattern",
-            fen: "2rqkr2/8/4Q3/8/8/8/8/4K3 w - - 0 1",
-            pgn: "1. Qe7#",
-            detailed: "Even with the black queen on d8, the king is trapped. The pieces on both sides form the classic epaulette pattern — the queen checkmates from e7."
         ),
     ]
 }
