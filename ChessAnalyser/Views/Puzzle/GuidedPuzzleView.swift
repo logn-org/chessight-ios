@@ -1,12 +1,14 @@
 import SwiftUI
 
-/// A guided puzzle view for learning tactics and checkmates.
-/// Reuses PuzzleViewModel with custom FEN + PGN data.
+/// Two-step guided puzzle: Learn (preview + arrows) → Practice (solve it)
 struct GuidedPuzzleView: View {
     @Environment(AppState.self) private var appState
     @State private var viewModel = PuzzleViewModel()
     @State private var showHint = false
     @State private var hintMoveUCI: String?
+    @State private var mode: Mode = .learn
+
+    enum Mode { case learn, practice }
 
     let puzzle: GuidedPuzzle
     let allPuzzles: [GuidedPuzzle]
@@ -16,70 +18,14 @@ struct GuidedPuzzleView: View {
             let screenWidth = geometry.size.width
             let boardSize = max(1, screenWidth - AppSpacing.sm * 2)
 
-            VStack(spacing: 0) {
-                // Detailed description
-                Text(puzzle.detailedDescription)
-                    .font(AppFonts.body)
-                    .foregroundStyle(AppColors.textSecondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, AppSpacing.md)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.bottom, AppSpacing.xs)
-
-                // Status
-                statusBar
-
-                // Board
-                ZStack {
-                    InteractiveBoardView(
-                        board: viewModel.board,
-                        selectedSquare: viewModel.selectedSquare,
-                        legalMoveTargets: viewModel.legalMoveTargets,
-                        lastMove: lastMove,
-                        arrows: hintArrows,
-                        showCoordinates: appState.engineConfig.showBoardCoordinates,
-                        flipped: viewModel.isFlipped,
-                        onTapSquare: { viewModel.tapSquare($0) }
-                    )
-
-                    // Checkmate / completion overlay
-                    if viewModel.puzzleCompleted {
-                        completionOverlay
+            ScrollView {
+                VStack(spacing: 0) {
+                    if mode == .learn {
+                        learnView(boardSize: boardSize)
+                    } else {
+                        practiceView(boardSize: boardSize)
                     }
                 }
-                .frame(width: boardSize, height: boardSize)
-                .padding(.horizontal, AppSpacing.sm)
-                .overlay(
-                    RoundedRectangle(cornerRadius: AppSpacing.cornerRadiusSm)
-                        .stroke(viewModel.wrongMove ? AppColors.blunder : Color.clear, lineWidth: 3)
-                        .padding(.horizontal, AppSpacing.sm)
-                        .animation(.easeInOut(duration: 0.3), value: viewModel.wrongMove)
-                )
-
-                // Controls
-                HStack(spacing: AppSpacing.lg) {
-                    Button { viewModel.isFlipped.toggle() } label: {
-                        Image(systemName: "arrow.up.arrow.down")
-                    }
-
-                    Button {
-                        viewModel.loadCustomPuzzle(title: puzzle.name, fen: puzzle.fen, pgn: puzzle.pgn)
-                        showHint = false
-                        hintMoveUCI = nil
-                    } label: {
-                        Image(systemName: "arrow.counterclockwise")
-                    }
-
-                    Button { toggleHint() } label: {
-                        Image(systemName: showHint ? "lightbulb.fill" : "lightbulb")
-                            .foregroundStyle(showHint ? AppColors.accent : AppColors.textPrimary)
-                    }
-                }
-                .font(.title3)
-                .foregroundStyle(AppColors.textPrimary)
-                .padding(.vertical, AppSpacing.sm)
-
-                Spacer()
             }
         }
         .background(AppColors.background)
@@ -87,8 +33,202 @@ struct GuidedPuzzleView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .onAppear {
-            viewModel.loadCustomPuzzle(title: puzzle.name, fen: puzzle.fen, pgn: puzzle.pgn)
             Analytics.screenViewed("guided_puzzle")
+        }
+    }
+
+    // MARK: - Learn Mode (preview + arrows)
+
+    private func learnView(boardSize: CGFloat) -> some View {
+        VStack(spacing: AppSpacing.md) {
+            // Detailed description
+            Text(puzzle.detailedDescription)
+                .font(AppFonts.body)
+                .foregroundStyle(AppColors.textSecondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, AppSpacing.md)
+                .padding(.top, AppSpacing.md)
+
+            // Preview board with solution arrows
+            let previewFEN = puzzle.previewFEN ?? puzzle.fen
+            ZStack {
+                // Non-interactive board showing the mating position
+                MiniBoardPreview(fen: previewFEN)
+                    .frame(width: boardSize, height: boardSize)
+                    .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadiusSm))
+                    .padding(.horizontal, AppSpacing.sm)
+
+                // Solution arrows overlay
+                solutionArrowsOverlay(boardSize: boardSize)
+            }
+
+            // Mate pattern label
+            if let previewFEN = puzzle.previewFEN {
+                let board = ChessBoard(fen: previewFEN)
+                if !board.hasLegalMoves(color: board.sideToMove) && board.isKingInCheck(color: board.sideToMove) {
+                    HStack(spacing: AppSpacing.sm) {
+                        Image(systemName: "crown.fill")
+                            .foregroundStyle(AppColors.accent)
+                        Text("Checkmate position")
+                            .font(AppFonts.captionBold)
+                            .foregroundStyle(AppColors.accent)
+                    }
+                }
+            }
+
+            // Try This button
+            Button {
+                mode = .practice
+                viewModel.loadCustomPuzzle(title: puzzle.name, fen: puzzle.fen, pgn: puzzle.pgn)
+            } label: {
+                HStack {
+                    Image(systemName: "play.fill")
+                    Text("Try This Checkmate")
+                        .font(AppFonts.subtitle)
+                }
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, AppSpacing.md)
+                .background(AppColors.accent)
+                .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
+            }
+            .padding(.horizontal, AppSpacing.md)
+            .padding(.top, AppSpacing.sm)
+
+            Spacer()
+        }
+    }
+
+    // MARK: - Solution Arrows Overlay
+
+    private func solutionArrowsOverlay(boardSize: CGFloat) -> some View {
+        let previewFEN = puzzle.previewFEN ?? puzzle.fen
+        let board = ChessBoard(fen: previewFEN)
+
+        // Find the checking piece(s) → draw arrow from attacker to king
+        let sideInCheck = board.sideToMove
+        var arrows: [(from: Square, to: Square)] = []
+
+        // Find king position
+        var kingSquare: Square?
+        for rank in 0..<8 {
+            for file in 0..<8 {
+                let sq = Square(file: file, rank: rank)
+                if let piece = board.piece(at: sq), piece.type == .king, piece.color == sideInCheck {
+                    kingSquare = sq
+                }
+            }
+        }
+
+        // Find attackers of king
+        if let king = kingSquare {
+            for rank in 0..<8 {
+                for file in 0..<8 {
+                    let sq = Square(file: file, rank: rank)
+                    if let piece = board.piece(at: sq), piece.color == sideInCheck.opposite {
+                        if board.canAttack(from: sq, to: king, piece: piece) {
+                            arrows.append((from: sq, to: king))
+                        }
+                    }
+                }
+            }
+        }
+
+        let squareSize = boardSize / 8
+
+        return ZStack {
+            ForEach(0..<arrows.count, id: \.self) { i in
+                let arrow = arrows[i]
+                let fromX = CGFloat(arrow.from.file) * squareSize + squareSize / 2
+                let fromY = CGFloat(7 - arrow.from.rank) * squareSize + squareSize / 2
+                let toX = CGFloat(arrow.to.file) * squareSize + squareSize / 2
+                let toY = CGFloat(7 - arrow.to.rank) * squareSize + squareSize / 2
+
+                Path { path in
+                    path.move(to: CGPoint(x: fromX, y: fromY))
+                    path.addLine(to: CGPoint(x: toX, y: toY))
+                }
+                .stroke(AppColors.blunder.opacity(0.8), style: StrokeStyle(lineWidth: 4, lineCap: .round))
+            }
+        }
+        .frame(width: boardSize, height: boardSize)
+        .allowsHitTesting(false)
+        .padding(.horizontal, AppSpacing.sm)
+    }
+
+    // MARK: - Practice Mode (solve the puzzle)
+
+    private func practiceView(boardSize: CGFloat) -> some View {
+        VStack(spacing: 0) {
+            // Short instruction
+            Text("Your turn — find the checkmate!")
+                .font(AppFonts.captionBold)
+                .foregroundStyle(AppColors.textSecondary)
+                .padding(.top, AppSpacing.sm)
+
+            // Status
+            statusBar
+
+            // Board
+            ZStack {
+                InteractiveBoardView(
+                    board: viewModel.board,
+                    selectedSquare: viewModel.selectedSquare,
+                    legalMoveTargets: viewModel.legalMoveTargets,
+                    lastMove: lastMove,
+                    arrows: hintArrows,
+                    showCoordinates: appState.engineConfig.showBoardCoordinates,
+                    flipped: viewModel.isFlipped,
+                    onTapSquare: { viewModel.tapSquare($0) }
+                )
+
+                if viewModel.puzzleCompleted {
+                    completionOverlay
+                }
+            }
+            .frame(width: boardSize, height: boardSize)
+            .padding(.horizontal, AppSpacing.sm)
+            .overlay(
+                RoundedRectangle(cornerRadius: AppSpacing.cornerRadiusSm)
+                    .stroke(viewModel.wrongMove ? AppColors.blunder : Color.clear, lineWidth: 3)
+                    .padding(.horizontal, AppSpacing.sm)
+                    .animation(.easeInOut(duration: 0.3), value: viewModel.wrongMove)
+            )
+
+            // Controls
+            HStack(spacing: AppSpacing.lg) {
+                Button { viewModel.isFlipped.toggle() } label: {
+                    Image(systemName: "arrow.up.arrow.down")
+                }
+
+                Button {
+                    viewModel.loadCustomPuzzle(title: puzzle.name, fen: puzzle.fen, pgn: puzzle.pgn)
+                    showHint = false
+                    hintMoveUCI = nil
+                } label: {
+                    Image(systemName: "arrow.counterclockwise")
+                }
+
+                Button { toggleHint() } label: {
+                    Image(systemName: showHint ? "lightbulb.fill" : "lightbulb")
+                        .foregroundStyle(showHint ? AppColors.accent : AppColors.textPrimary)
+                }
+
+                // Back to learn mode
+                Button {
+                    mode = .learn
+                    showHint = false
+                    hintMoveUCI = nil
+                } label: {
+                    Image(systemName: "eye.fill")
+                        .foregroundStyle(AppColors.great)
+                }
+            }
+            .font(.title3)
+            .foregroundStyle(AppColors.textPrimary)
+            .padding(.vertical, AppSpacing.sm)
+
+            Spacer()
         }
     }
 
