@@ -188,6 +188,19 @@ struct SettingsTab: View {
                     }
                     .listRowBackground(AppColors.surface)
 
+                    Link(destination: URL(string: "https://tally.so/r/yPE5x0") ?? URL(fileURLWithPath: "/")) {
+                        HStack {
+                            Image(systemName: "star.fill")
+                                .foregroundStyle(AppColors.accent)
+                            Text("Rate Chessight")
+                                .foregroundStyle(AppColors.textPrimary)
+                            Spacer()
+                            Image(systemName: "arrow.up.right.square")
+                                .foregroundStyle(AppColors.accent)
+                        }
+                    }
+                    .listRowBackground(AppColors.surface)
+
                     Link(destination: URL(string: "mailto:help@chessight.app") ?? URL(fileURLWithPath: "/")) {
                         HStack {
                             Image(systemName: "envelope.fill")
