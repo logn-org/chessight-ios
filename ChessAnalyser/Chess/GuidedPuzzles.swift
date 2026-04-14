@@ -169,6 +169,17 @@ enum GuidedPuzzles {
         ),
     ]
 
+    static let sneakyStallionMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Sneaky Stallion Mate",
+            description: "Knight sneaks in while the Queen chokes the king on the edge",
+            fen: "2kr1b2/Qp1q1pp1/6p1/N1p1p1n1/2P5/4PP1r/P4PK1/R1B2R2 b - - 0 1",
+            pgn: "1... Rh2+ 2. Kxh2 Qh3+ 3. Kg1 Nxf3#",
+            previewFEN: "6k1/4N2p/5Q2/8/8/8/8/5K2 w - - 0 1",
+            detailed: "Similar to the Bucking Bronco, but the enemy King isn't stuck in the corner — it's on the edge of the board, with an escape square blocked by one of its own pieces. The Queen chokes the remaining escape squares, and the Knight sneaks in to deliver the final checkmate."
+        ),
+    ]
+
     static let epauletteMates: [GuidedPuzzle] = [
         GuidedPuzzle(
             name: "Epaulette Mate",
