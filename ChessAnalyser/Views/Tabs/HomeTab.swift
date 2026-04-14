@@ -19,7 +19,7 @@ struct HomeTab: View {
                 }
                 .background(AppColors.background)
             }
-            .navigationTitle("Chessight")
+            .navigationTitle("Hey, Strategist")
             .toolbarColorScheme(.dark, for: .navigationBar)
             .sheet(isPresented: $showImportPGN) {
                 ImportPGNView()
