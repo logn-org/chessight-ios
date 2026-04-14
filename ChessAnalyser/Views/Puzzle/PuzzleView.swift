@@ -60,7 +60,10 @@ struct PuzzleView: View {
                 }
             }
         }
-        .task { loadPuzzle() }
+        .task {
+            Analytics.screenViewed("puzzle")
+            loadPuzzle()
+        }
         .onChange(of: viewModel.currentSolutionIndex) { _, _ in
             // Reset hint after each move
             showHint = false

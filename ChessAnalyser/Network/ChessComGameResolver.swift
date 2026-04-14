@@ -64,6 +64,7 @@ actor ChessComGameResolver {
                 // Validate the generated PGN
                 if PGNParser.validate(pgn) == nil {
                     CrashLogger.logNetwork("TCN decode successful for game \(gameId)")
+                    Analytics.tcnDecodeUsed(success: true, fallbackToArchive: false)
                     resolveTrace?.setValue(1, forMetric: "tcn_success")
                     resolveTrace?.stop()
                     return ResolvedGame(
@@ -80,6 +81,7 @@ actor ChessComGameResolver {
 
         // Fallback: fetch PGN from player's game archive (slow, 2nd API call)
         CrashLogger.logNetwork("Falling back to archive API for game \(gameId)")
+        Analytics.tcnDecodeUsed(success: false, fallbackToArchive: true)
         resolveTrace?.setValue(0, forMetric: "tcn_success")
         let result = try await resolveViaArchive(gameData: gameData, gameId: gameId)
         resolveTrace?.stop()

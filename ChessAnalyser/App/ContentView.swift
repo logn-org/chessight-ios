@@ -25,6 +25,9 @@ struct ContentView: View {
                 }
                 .tag(AppState.AppTab.settings)
         }
+        .onChange(of: appState.selectedTab) { oldTab, newTab in
+            Analytics.tabSwitched(from: oldTab.title, to: newTab.title)
+        }
         .tint(AppColors.accent)
         .fullScreenCover(isPresented: $appState.showSharedGame) {
             if let content = appState.sharedContent {

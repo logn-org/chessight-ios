@@ -36,16 +36,16 @@ enum AnalysisDepthPreset: String, Codable, CaseIterable, Identifiable {
 final class EngineConfiguration {
     private static let storageKey = "engine_configuration"
 
-    var depthPreset: AnalysisDepthPreset = .quick { didSet { save() } }
-    var threads: Int = 2 { didSet { save() } }
-    var hashMB: Int = 64 { didSet { save() } }
-    var multiPV: Int = 3 { didSet { save() } }
+    var depthPreset: AnalysisDepthPreset = .quick { didSet { Analytics.settingsChanged(setting: "depth_preset", oldValue: oldValue.rawValue, newValue: depthPreset.rawValue); save() } }
+    var threads: Int = 2 { didSet { Analytics.settingsChanged(setting: "threads", oldValue: "\(oldValue)", newValue: "\(threads)"); save() } }
+    var hashMB: Int = 64 { didSet { Analytics.settingsChanged(setting: "hash_mb", oldValue: "\(oldValue)", newValue: "\(hashMB)"); save() } }
+    var multiPV: Int = 3 { didSet { Analytics.settingsChanged(setting: "multi_pv", oldValue: "\(oldValue)", newValue: "\(multiPV)"); save() } }
 
     // Arrow display settings
-    var showBestMoveArrow: Bool = true { didSet { save() } }
-    var showAttackArrows: Bool = false { didSet { save() } }
-    var showDefenseArrows: Bool = false { didSet { save() } }
-    var showBoardCoordinates: Bool = true { didSet { save() } }
+    var showBestMoveArrow: Bool = true { didSet { Analytics.settingsChanged(setting: "show_best_move_arrow", oldValue: "\(oldValue)", newValue: "\(showBestMoveArrow)"); save() } }
+    var showAttackArrows: Bool = false { didSet { Analytics.settingsChanged(setting: "show_attack_arrows", oldValue: "\(oldValue)", newValue: "\(showAttackArrows)"); save() } }
+    var showDefenseArrows: Bool = false { didSet { Analytics.settingsChanged(setting: "show_defense_arrows", oldValue: "\(oldValue)", newValue: "\(showDefenseArrows)"); save() } }
+    var showBoardCoordinates: Bool = true { didSet { Analytics.settingsChanged(setting: "show_board_coordinates", oldValue: "\(oldValue)", newValue: "\(showBoardCoordinates)"); save() } }
 
     var depth: Int { depthPreset.depth }
 

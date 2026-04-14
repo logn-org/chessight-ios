@@ -32,6 +32,9 @@ struct ProfilesTab: View {
             .sheet(isPresented: $showAddProfile) {
                 AddProfileView()
             }
+            .onAppear {
+                Analytics.screenViewed("profiles")
+            }
             .alert("Delete Profile", isPresented: Binding(
                 get: { profileToDelete != nil },
                 set: { if !$0 { profileToDelete = nil } }

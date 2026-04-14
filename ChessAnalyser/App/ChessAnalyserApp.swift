@@ -17,6 +17,11 @@ struct ChessightApp: App {
             ContentView()
                 .environment(appState)
                 .preferredColorScheme(.dark)
+                .onAppear {
+                    let isIPad = UIDevice.current.userInterfaceIdiom == .pad
+                    let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
+                    Analytics.appLaunched(isIPad: isIPad, appVersion: version)
+                }
                 .onOpenURL { url in
                     handleIncomingURL(url)
                 }

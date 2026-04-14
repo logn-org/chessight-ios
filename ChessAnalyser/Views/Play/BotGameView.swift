@@ -70,6 +70,9 @@ struct BotGameView: View {
         .navigationTitle("Play vs Bot")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .onAppear {
+            Analytics.screenViewed("bot_game")
+        }
     }
 
     private func colorButton(color: PieceColor?, label: String, icon: String) -> some View {

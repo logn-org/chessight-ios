@@ -16,6 +16,7 @@ final class BoardEditorViewModel {
 
     var pickedUpSquare: Square?
     var pickedUpPiece: ChessPiece?
+    var didLoadFEN = false
 
     // Undo history
     private var history: [ChessBoard] = []
@@ -158,6 +159,7 @@ final class BoardEditorViewModel {
 
         pickedUpSquare = nil
         pickedUpPiece = nil
+        didLoadFEN = true
         return nil
     }
 

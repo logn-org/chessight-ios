@@ -121,11 +121,13 @@ struct SharedGameView: View {
 
             switch content {
             case .pgn(let pgn):
+                Analytics.shareExtensionUsed(contentType: "pgn")
                 statusText = "Parsing PGN..."
                 try? await Task.sleep(for: .milliseconds(300))
                 resolvedPGN = pgn
 
             case .chessComLink(let gameId):
+                Analytics.shareExtensionUsed(contentType: "link")
                 statusText = "Fetching from chess.com..."
                 do {
                     let game = try await resolver.resolveGame(gameId: gameId)
@@ -138,6 +140,7 @@ struct SharedGameView: View {
                 }
 
             case .unknown:
+                Analytics.shareExtensionUsed(contentType: "unknown")
                 self.error = "No valid chess game or chess.com link found"
                 isLoading = false
             }

@@ -30,6 +30,7 @@ final class AnalysisEngine {
 
     private var currentGame: ParsedGame?
     private var targetDepth: Int = 18
+    private var analysisStartTime: CFAbsoluteTime = 0
 
     // MARK: - Lifecycle
 
@@ -68,6 +69,7 @@ final class AnalysisEngine {
         cache = [:]
         evalCache = [:]
         gameAnalysis = nil
+        analysisStartTime = CFAbsoluteTimeGetCurrent()
 
         progress = AnalysisProgress(
             currentMove: 0,
@@ -195,6 +197,14 @@ final class AnalysisEngine {
     // MARK: - Control
 
     func cancelAll() {
+        if progress.isAnalyzing, analysisStartTime > 0 {
+            let timeBeforeAbandonMs = Int((CFAbsoluteTimeGetCurrent() - analysisStartTime) * 1000)
+            Analytics.analysisAbandoned(
+                movesCompleted: progress.currentMove,
+                totalMoves: progress.totalMoves,
+                timeBeforeAbandonMs: timeBeforeAbandonMs
+            )
+        }
         backgroundTask?.cancel()
         backgroundTask = nil
         onDemandTask?.cancel()
@@ -297,6 +307,19 @@ final class AnalysisEngine {
         )
         gameAnalysis = analysis
         EngineManager.shared.cacheGameAnalysis(analysis) // Session cache
+
+        let durationMs = Int((CFAbsoluteTimeGetCurrent() - analysisStartTime) * 1000)
+        Analytics.analysisCompleted(moveCount: moves.count, durationMs: durationMs, depthPreset: "\(depth)")
+        Analytics.accuracyDistribution(whiteAccuracy: whiteAccuracy, blackAccuracy: blackAccuracy)
+
+        var counts: [MoveClassification: Int] = [:]
+        for m in moves { counts[m.classification, default: 0] += 1 }
+        Analytics.classificationDistribution(
+            brilliant: counts[.brilliant] ?? 0, great: counts[.great] ?? 0,
+            best: counts[.best] ?? 0, good: counts[.good] ?? 0,
+            ok: counts[.ok] ?? 0, inaccuracy: counts[.inaccuracy] ?? 0,
+            mistake: counts[.mistake] ?? 0, blunder: counts[.blunder] ?? 0
+        )
 
         progress = AnalysisProgress(
             currentMove: game.moves.count,

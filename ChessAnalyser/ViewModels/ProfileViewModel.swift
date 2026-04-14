@@ -41,6 +41,7 @@ final class ProfileViewModel {
             store.addProfile(profile)
             validationResult = .valid(profile)
             searchUsername = ""
+            Analytics.profileAdded()
         } catch {
             validationResult = .invalid(error.localizedDescription)
             self.error = error.localizedDescription

@@ -85,6 +85,9 @@ struct BoardEditorView: View {
         .navigationDestination(isPresented: $navigateToBotGame) {
             BotGameView(customFEN: fenToPlay, initialFlip: viewModel.isFlipped)
         }
+        .onAppear {
+            Analytics.screenViewed("board_editor")
+        }
         .sheet(isPresented: $showRules) {
             rulesSheet
         }
@@ -268,6 +271,7 @@ struct BoardEditorView: View {
                     validationError = error
                 } else {
                     fenToPlay = viewModel.currentFEN
+                    Analytics.boardEditorUsed(action: "free_play", loadedFEN: false)
                     navigateToFreePlay = true
                 }
             } label: {
@@ -285,6 +289,7 @@ struct BoardEditorView: View {
                     validationError = error
                 } else {
                     fenToPlay = viewModel.currentFEN
+                    Analytics.boardEditorUsed(action: "bot", loadedFEN: false)
                     navigateToBotGame = true
                 }
             } label: {

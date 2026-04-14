@@ -25,6 +25,7 @@ struct HomeTab: View {
                 ImportPGNView()
             }
             .onAppear {
+                Analytics.screenViewed("home")
                 recentAnalyses = appState.analysisCache.recentAnalyses(limit: 10)
             }
         }

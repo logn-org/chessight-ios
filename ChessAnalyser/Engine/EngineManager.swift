@@ -30,11 +30,14 @@ final class EngineManager {
 
         initTask = Task {
             let trace = PerformanceTracer.traceEngineInit()
+            let startTime = CFAbsoluteTimeGetCurrent()
             CrashLogger.logEngine("Initializing Stockfish (threads: \(config.threads), hash: \(config.hashMB)MB)")
             let actor = StockfishActor()
             try await actor.initialize(config: config)
             self.stockfish = actor
             self.isInitialized = true
+            let durationMs = Int((CFAbsoluteTimeGetCurrent() - startTime) * 1000)
+            Analytics.engineInitTime(durationMs: durationMs, threads: config.threads, hashMB: config.hashMB)
             CrashLogger.logEngine("Stockfish initialized successfully")
             trace?.stop()
         }

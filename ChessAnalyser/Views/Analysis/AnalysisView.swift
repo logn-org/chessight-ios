@@ -8,6 +8,7 @@ struct AnalysisView: View {
     @State private var showEngineHints = false
     @State private var playerInfoUsername = ""
     @State private var playerInfoRating: Int?
+    @State private var loggedIPadLayout = false
 
     let pgn: String?
     let fen: String?
@@ -57,7 +58,10 @@ struct AnalysisView: View {
                     .foregroundStyle(AppColors.textPrimary)
             }
         }
-        .onAppear { loadGame() }
+        .onAppear {
+            Analytics.screenViewed("analysis")
+            loadGame()
+        }
         .onDisappear { viewModel.cleanup() }
         .onChange(of: viewModel.gameState.currentMoveIndex) { _, _ in
             viewModel.onMoveChanged()
@@ -277,7 +281,7 @@ struct AnalysisView: View {
                 onGoForward: { viewModel.goForward() },
                 onGoToEnd: { viewModel.goToEnd() },
                 onToggleAutoPlay: { viewModel.toggleAutoPlay() },
-                onFlipBoard: { viewModel.isFlipped.toggle() },
+                onFlipBoard: { viewModel.flipBoard() },
                 onReEvaluate: { viewModel.reEvaluate(config: appState.engineConfig) }
             )
             .padding(.vertical, 2)
@@ -324,6 +328,12 @@ struct AnalysisView: View {
     // MARK: - iPad Layout
 
     private func iPadLayout(geometry: GeometryProxy) -> some View {
+        if !loggedIPadLayout {
+            DispatchQueue.main.async {
+                loggedIPadLayout = true
+                Analytics.iPadLayoutUsed(screenName: "analysis")
+            }
+        }
         let screenH = geometry.size.height
         let screenW = geometry.size.width
         // Board: fit within height (minus headers+controls ~140pt) and cap at 55% width
@@ -408,7 +418,7 @@ struct AnalysisView: View {
                     onGoForward: { viewModel.goForward() },
                     onGoToEnd: { viewModel.goToEnd() },
                     onToggleAutoPlay: { viewModel.toggleAutoPlay() },
-                    onFlipBoard: { viewModel.isFlipped.toggle() },
+                    onFlipBoard: { viewModel.flipBoard() },
                     onReEvaluate: { viewModel.reEvaluate(config: appState.engineConfig) }
                 )
                 .padding(.vertical, AppSpacing.xs)

@@ -20,6 +20,8 @@ final class BotGameViewModel {
     var gameResult: String?
 
     // Engine state
+    private var gameStartTime = CFAbsoluteTimeGetCurrent()
+
     var isBotThinking = false
     var botBestMove: String?
     var botBestMoveUCI: String?
@@ -52,6 +54,9 @@ final class BotGameViewModel {
         botBestMove = nil
         botBestMoveUCI = nil
         playerBestMoveUCI = nil
+
+        gameStartTime = CFAbsoluteTimeGetCurrent()
+        Analytics.botGameStarted(playerColor: asColor.rawValue, botDepth: botDepth, fromEditor: fen != nil)
 
         if !isPlayerTurn {
             makeBotMove()
@@ -154,30 +159,35 @@ final class BotGameViewModel {
             gameOver = true
             gameResult = isWhite ? "White wins by checkmate!" : "Black wins by checkmate!"
             SoundManager.shared.playCheckmate()
+            trackGameEnd()
             return
         }
 
         if !board.hasLegalMoves(color: board.sideToMove) {
             gameOver = true
             gameResult = "Draw by stalemate"
+            trackGameEnd()
             return
         }
 
         if board.isInsufficientMaterial() {
             gameOver = true
             gameResult = "Draw — insufficient material"
+            trackGameEnd()
             return
         }
 
         if board.isThreefoldRepetition() {
             gameOver = true
             gameResult = "Draw — threefold repetition"
+            trackGameEnd()
             return
         }
 
         if board.isFiftyMoveRule() {
             gameOver = true
             gameResult = "Draw — fifty-move rule"
+            trackGameEnd()
             return
         }
 
@@ -250,30 +260,35 @@ final class BotGameViewModel {
                 gameOver = true
                 gameResult = isWhite ? "White wins by checkmate!" : "Black wins by checkmate!"
                 SoundManager.shared.playCheckmate()
+                trackGameEnd()
                 return
             }
 
             if !board.hasLegalMoves(color: board.sideToMove) {
                 gameOver = true
                 gameResult = "Draw by stalemate"
+                trackGameEnd()
                 return
             }
 
             if board.isInsufficientMaterial() {
                 gameOver = true
                 gameResult = "Draw — insufficient material"
+                trackGameEnd()
                 return
             }
 
             if board.isThreefoldRepetition() {
                 gameOver = true
                 gameResult = "Draw — threefold repetition"
+                trackGameEnd()
                 return
             }
 
             if board.isFiftyMoveRule() {
                 gameOver = true
                 gameResult = "Draw — fifty-move rule"
+                trackGameEnd()
                 return
             }
 
@@ -325,6 +340,12 @@ final class BotGameViewModel {
     func resign() {
         gameOver = true
         gameResult = playerColor == .white ? "Black wins — White resigned" : "White wins — Black resigned"
+        trackGameEnd()
+    }
+
+    private func trackGameEnd() {
+        let durationMs = Int((CFAbsoluteTimeGetCurrent() - gameStartTime) * 1000)
+        Analytics.botGameEnded(result: gameResult ?? "", moveCount: moveHistory.count, durationMs: durationMs)
     }
 
     // MARK: - Helpers

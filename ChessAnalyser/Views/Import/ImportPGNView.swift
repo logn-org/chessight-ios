@@ -161,6 +161,9 @@ struct ImportPGNView: View {
             .navigationTitle("Import Game")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .onAppear {
+                Analytics.screenViewed("import_pgn")
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") { dismiss() }

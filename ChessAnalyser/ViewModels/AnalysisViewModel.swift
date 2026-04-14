@@ -16,6 +16,7 @@ final class AnalysisViewModel {
     var autoPlay = false
     var isFlipped = false
     private var autoPlayTask: Task<Void, Never>?
+    private var lastLoggedEndStatus: String?
 
     // Sticky eval — never resets to 0
     private var lastKnownEval: EngineEval?
@@ -49,6 +50,7 @@ final class AnalysisViewModel {
     func loadPGN(_ pgn: String) {
         do { try gameState.loadPGN(pgn); error = nil }
         catch { self.error = error.localizedDescription }
+        Analytics.pgnImported(method: "paste", valid: error == nil)
     }
 
     func loadFEN(_ fen: String) {
@@ -63,6 +65,7 @@ final class AnalysisViewModel {
         whiteRating = game.white.rating
         blackRating = game.black.rating
         loadPGN(game.pgn)
+        Analytics.gameLoadedFromProfile(timeClass: game.timeClass.rawValue)
 
         // Flip board so the profile user is at the bottom.
         // Check both username fields (chess.com sometimes has case differences).
@@ -81,6 +84,9 @@ final class AnalysisViewModel {
 
     func startAnalysis(config: EngineConfiguration) async {
         CrashLogger.logEngine("Starting analysis (depth: \(config.depth))")
+        let source = whiteUsername != nil ? "profile" : "pgn"
+        Analytics.gameAnalyzed(source: source, moveCount: gameState.game?.moves.count ?? 0, depthPreset: config.depthPreset.rawValue)
+        Analytics.depthPresetUsed(preset: config.depthPreset.rawValue)
         do {
             if !analysisEngine.isInitialized {
                 try await analysisEngine.initialize(config: config)
@@ -125,6 +131,7 @@ final class AnalysisViewModel {
             )
         }
         analysisEngine.analyzeCurrentMove(moveIndex: gameState.currentMoveIndex)
+        trackGameEndIfNeeded()
     }
 
     // MARK: - Unified Navigation
@@ -475,12 +482,14 @@ final class AnalysisViewModel {
         lastSuggestedBestMove = nil
         explorationAfterResult = nil
         deselect()
+        Analytics.variationExplored(moveCount: 0, fromGame: gameState.game?.moves.isEmpty == false)
 
         // Run fresh analysis for the current position
         analyzeExplorationPosition()
     }
 
     func exitExploration() {
+        Analytics.variationExplored(moveCount: explorationMoves.count, fromGame: true)
         saveCurrentEvalToSticky()
         explorationAnalysisTask?.cancel()
         isExploring = false
@@ -664,6 +673,27 @@ final class AnalysisViewModel {
         }
 
         return nil
+    }
+
+    /// Call after reading `boardGameEndStatus` to track the event once per distinct status.
+    func trackGameEndIfNeeded() {
+        let status = boardGameEndStatus
+        let key: String?
+        switch status {
+        case .checkmate: key = "checkmate"
+        case .stalemate: key = "stalemate"
+        case .insufficientMaterial: key = "insufficientMaterial"
+        case .threefoldRepetition: key = "threefoldRepetition"
+        case .fiftyMoveRule: key = "fiftyMoveRule"
+        case .gameResult(let result, _): key = "gameResult_\(result)"
+        case .none: key = nil
+        }
+        if let key, key != lastLoggedEndStatus {
+            lastLoggedEndStatus = key
+            Analytics.gameEndDetected(type: key)
+        } else if key == nil {
+            lastLoggedEndStatus = nil
+        }
     }
 
     enum GameEndStatus {
@@ -859,6 +889,11 @@ final class AnalysisViewModel {
             }
         }
         return targets
+    }
+
+    func flipBoard() {
+        isFlipped.toggle()
+        Analytics.flipBoardUsed()
     }
 
     func cleanup() {

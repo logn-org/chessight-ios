@@ -22,6 +22,9 @@ final class PuzzleViewModel {
     var userMoves: [GameMove] = []
     var lastMoveFrom: String?
     var lastMoveTo: String?
+    private var puzzleStartTime = CFAbsoluteTimeGetCurrent()
+    private var puzzleAttempts = 0
+    private var puzzleMode = "daily"
 
     var sideToMove: PieceColor { board.sideToMove }
     var isUserTurn: Bool {
@@ -35,6 +38,7 @@ final class PuzzleViewModel {
         CrashLogger.log("Loading today's puzzle")
         isLoading = true
         error = nil
+        puzzleMode = "daily"
         let trace = PerformanceTracer.tracePuzzleFetch()
         do {
             puzzle = try await api.getTodaysPuzzle()
@@ -49,6 +53,7 @@ final class PuzzleViewModel {
     func loadRandomPuzzle() async {
         isLoading = true
         error = nil
+        puzzleMode = "random"
         do {
             puzzle = try await api.getRandomPuzzle()
             if let p = puzzle { setupPuzzle(p) }
@@ -67,6 +72,8 @@ final class PuzzleViewModel {
         puzzleCompleted = false
         wrongMove = false
         userMoves = []
+        puzzleStartTime = CFAbsoluteTimeGetCurrent()
+        puzzleAttempts = 0
         selectedSquare = nil
         legalMoveTargets = []
 
@@ -141,6 +148,8 @@ final class PuzzleViewModel {
             if currentSolutionIndex >= solutionMoves.count {
                 puzzleCompleted = true
                 SoundManager.shared.playCheckmate() // Victory haptic
+                let timeMs = Int((CFAbsoluteTimeGetCurrent() - puzzleStartTime) * 1000)
+                Analytics.puzzleSolved(type: puzzleMode, attempts: puzzleAttempts, usedHint: false, timeMs: timeMs)
                 return
             }
 
@@ -151,6 +160,7 @@ final class PuzzleViewModel {
         } else {
             // Wrong move — show error and revert
             wrongMove = true
+            puzzleAttempts += 1
             SoundManager.shared.playCheck() // Error haptic
 
             // Execute the wrong move briefly to show it
@@ -179,6 +189,8 @@ final class PuzzleViewModel {
         if currentSolutionIndex >= solutionMoves.count {
             puzzleCompleted = true
             SoundManager.shared.playCheckmate()
+            let timeMs = Int((CFAbsoluteTimeGetCurrent() - puzzleStartTime) * 1000)
+            Analytics.puzzleSolved(type: puzzleMode, attempts: puzzleAttempts, usedHint: false, timeMs: timeMs)
         }
     }
 

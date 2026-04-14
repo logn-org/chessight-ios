@@ -168,6 +168,9 @@ struct SettingsTab: View {
             .background(AppColors.background)
             .navigationTitle("Settings")
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .onAppear {
+                Analytics.screenViewed("settings")
+            }
         }
     }
 }

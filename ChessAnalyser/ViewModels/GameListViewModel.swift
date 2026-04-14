@@ -37,6 +37,7 @@ final class GameListViewModel {
 
         trace?.stop()
         isLoading = false
+        Analytics.profileGamesBrowsed(gamesViewedCount: games.count)
     }
 
     /// Load more games (older months) — triggered when scrolling to bottom
