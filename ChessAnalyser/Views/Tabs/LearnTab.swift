@@ -47,7 +47,7 @@ struct LearnTab: View {
                 }
 
                 NavigationLink {
-                    GuidedPuzzleCategoryList(title: "Checkmates", categories: checkmatePuzzles, orderedKeys: ["Epaulette Mate", "Swallow's Tail Mate", "Cozio's Mate", "Kill Box Mate", "Triangle Mate", "Railroad Mate", "Max Lange Mate", "Balestra Mate", "Bucking Bronco Mate", "Sneaky Stallion Mate", "Damiano's Mate", "Lolli's Checkmate", "Back Rank Mate", "Blind Swine Mate", "Lawnmower Mate", "h-File Mate", "Opera Mate", "Mayet's Mate", "Reti's Mate", "Pillsbury Mate", "Morphy's Mate", "Greco Mate", "Corner Mate", "Anastasia's Mate", "Arabian Mate", "Vukovic Mate", "Hook Mate", "Anderssen's Mate", "Diagonal Corridor Mate", "Bombardiers' Mate"])
+                    GuidedPuzzleCategoryList(title: "Checkmates", categories: checkmatePuzzles, orderedKeys: ["Epaulette Mate", "Swallow's Tail Mate", "Cozio's Mate", "Kill Box Mate", "Triangle Mate", "Railroad Mate", "Max Lange Mate", "Balestra Mate", "Bucking Bronco Mate", "Sneaky Stallion Mate", "Damiano's Mate", "Lolli's Checkmate", "Back Rank Mate", "Blind Swine Mate", "Lawnmower Mate", "h-File Mate", "Opera Mate", "Mayet's Mate", "Reti's Mate", "Pillsbury Mate", "Morphy's Mate", "Greco Mate", "Corner Mate", "Anastasia's Mate", "Arabian Mate", "Vukovic Mate", "Hook Mate", "Anderssen's Mate", "Diagonal Corridor Mate", "Bombardiers' Mate", "Boden's Mate", "Smothered Mate", "Two Knights Mate", "Suffocation Mate", "Collaboration Mate", "Blackburne's Mate", "David and Goliath Mate"])
                 } label: {
                     studyCard(title: "Checkmates", subtitle: "Mating patterns", icon: "crown.fill", color: AppColors.blunder)
                 }
@@ -130,6 +130,13 @@ struct LearnTab: View {
         "Anderssen's Mate": GuidedPuzzles.anderssenMates,
         "Diagonal Corridor Mate": GuidedPuzzles.diagonalCorridorMates,
         "Bombardiers' Mate": GuidedPuzzles.bombardiersMates,
+        "Boden's Mate": GuidedPuzzles.bodenMates,
+        "Smothered Mate": GuidedPuzzles.smotheredMates,
+        "Two Knights Mate": GuidedPuzzles.twoKnightsMates,
+        "Suffocation Mate": GuidedPuzzles.suffocationMates,
+        "Collaboration Mate": GuidedPuzzles.collaborationMates,
+        "Blackburne's Mate": GuidedPuzzles.blackburneMates,
+        "David and Goliath Mate": GuidedPuzzles.davidGoliathMates,
     ]}
 
     private var endgameItems: [PracticeItem] {[

@@ -388,6 +388,83 @@ enum GuidedPuzzles {
         ),
     ]
 
+    static let bodenMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Boden's Mate",
+            description: "Two Bishops work like scissors to trap the King",
+            fen: "r1bqk2r/p1pn1pp1/1p2pn1p/8/3P4/B1PB4/P1P1QPPP/R3K1NR w KQkq - 0 10",
+            pgn: "1. Qxe6+ fxe6 2. Bg6#",
+            previewFEN: "2kr4/3p4/B7/4B3/8/8/8/6K1 w - - 0 1",
+            detailed: "Two Bishops work like a pair of scissors to trap the enemy King. Named after Samuel Boden who used it in one of his games. The queen sacrifice opens the diagonal for the bishop to deliver the fatal blow."
+        ),
+    ]
+
+    static let smotheredMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Smothered Mate",
+            description: "A lone Knight mates the King trapped by its own pieces",
+            fen: "4r2k/6pp/8/3QN3/8/q7/5PPP/6K1 w - - 0 1",
+            pgn: "1. Nf7+ Kg8 2. Nh6+ Kh8 3. Qg8+ Rxg8 4. Nf7#",
+            previewFEN: "6rk/5Npp/8/8/8/8/8/6K1 w - - 0 1",
+            detailed: "One of the most popular and beautiful checkmates in chess! A lone knight mates the enemy King whose escape squares are all blocked by its own pieces. The queen sacrifice on g8 forces the rook to smother its own king."
+        ),
+    ]
+
+    static let twoKnightsMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Two Knights Mate",
+            description: "Two Knights roll together to finish off the game",
+            fen: "2r2r1k/pb2b1p1/1p4Qp/3nN3/2p1N1Pq/3B4/PPP4P/1KR4R w - - 0 1",
+            pgn: "1. Qh7+ Kxh7 2. Nf6+ Kh8 3. Ng6#",
+            previewFEN: "7k/5Np1/5N2/8/8/8/8/6K1 w - - 0 1",
+            detailed: "A beautiful pattern rarely covered in chess literature. As the name suggests, the Knights roll together to finish off the game. The queen sacrifice clears the way for the double-knight coordination."
+        ),
+    ]
+
+    static let suffocationMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Suffocation Mate",
+            description: "Bishop suffocates the King, Knight delivers the blow",
+            fen: "r2q1rk1/pb3pbp/np4pQ/3p4/1P1N4/P2BP3/1B3PPP/R3K2R w KQ - 0 16",
+            pgn: "1. Qxg7+ Kxg7 2. Nf5+ Kg8 3. Nh6#",
+            previewFEN: "5rk1/5p1p/7N/8/3B4/8/8/6K1 w - - 0 1",
+            detailed: "The Bishop suffocates the enemy King by controlling important escape squares, while others are blocked by friendly pieces. The Knight lands the final checkmate! The queen sacrifice draws the king out for the knight's finishing move."
+        ),
+    ]
+
+    static let collaborationMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Collaboration Mate",
+            description: "Bishop checkmates while Knight controls escape squares",
+            fen: "7r/4Rpk1/6p1/q2p4/P3b3/5NPn/2B1QP1P/7K b - - 0 1",
+            pgn: "1... Qe1+ 2. Qxe1 Bxf3#",
+            previewFEN: "7k/5p1p/5B1N/8/8/8/8/6K1 w - - 0 1",
+            detailed: "The Bishop delivers checkmate while the Knight controls the escape squares — the reverse of the Suffocation Mate. Some escape squares are blocked by the King's own pieces! The queen sacrifice forces a capture that opens the diagonal."
+        ),
+    ]
+
+    static let blackburneMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Blackburne's Mate",
+            description: "Two Bishops + Knight — minor pieces deliver the finish",
+            fen: "r4rk1/p4pp1/1p1b1n1p/7q/1P4bN/P3P1P1/2BB1P1P/1Q2RR1K b - - 0 1",
+            pgn: "1... Qxh4 2. gxh4 Bf3+ 3. Kg1 Ng4 4. Rc1 Bxh2#",
+            previewFEN: "7k/5B2/8/4B1N1/8/8/8/6K1 w - - 0 1",
+            detailed: "This mating pattern features 3 minor pieces — 2 Bishops and 1 Knight. Two minor pieces control the escape squares while the remaining one delivers checkmate. The queen sacrifice starts a beautiful combination."
+        ),
+    ]
+
+    static let davidGoliathMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "David and Goliath Mate",
+            description: "A humble pawn delivers the checkmate!",
+            fen: "6r1/p1R5/5pk1/6P1/3r1PK1/6Q1/1q6/5R2 w - - 0 1",
+            pgn: "1. Qd3+ Rxd3 2. f5#",
+            previewFEN: "7k/6P1/7K/3B4/8/8/8/8 w - - 0 1",
+            detailed: "A pawn delivers the checkmate! The enemy King's escape squares are controlled or blocked by its own pieces. Even though it's rare, this is one of the favorite checkmates of many chess players. The queen sacrifice forces the rook to block, then the pawn strikes."
+        ),
+    ]
+
     static let epauletteMates: [GuidedPuzzle] = [
         GuidedPuzzle(
             name: "Epaulette Mate",
