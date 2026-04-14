@@ -15,20 +15,21 @@ struct AnalysisView: View {
     let chessComGame: ChessComGame?
     let profileUsername: String?
     let initialFlip: Bool
+    let studyMode: Bool
 
-    init(pgn: String) {
+    init(pgn: String, studyMode: Bool = false) {
         self.pgn = pgn; self.fen = nil; self.chessComGame = nil
-        self.profileUsername = nil; self.initialFlip = false
+        self.profileUsername = nil; self.initialFlip = false; self.studyMode = studyMode
     }
 
-    init(fen: String, initialFlip: Bool = false) {
+    init(fen: String, initialFlip: Bool = false, studyMode: Bool = false) {
         self.pgn = nil; self.fen = fen; self.chessComGame = nil
-        self.profileUsername = nil; self.initialFlip = initialFlip
+        self.profileUsername = nil; self.initialFlip = initialFlip; self.studyMode = studyMode
     }
 
     init(game: ChessComGame, profileUsername: String? = nil) {
         self.pgn = nil; self.fen = nil; self.chessComGame = game
-        self.profileUsername = profileUsername; self.initialFlip = false
+        self.profileUsername = profileUsername; self.initialFlip = false; self.studyMode = false
     }
 
     var isFENMode: Bool { fen != nil }
@@ -960,13 +961,17 @@ struct AnalysisView: View {
         else if let fen = fen {
             viewModel.loadFEN(fen)
             viewModel.isFlipped = initialFlip
-            viewModel.explorationAnalysisEnabled = false  // Hints off by default in FEN mode
+            viewModel.explorationAnalysisEnabled = !studyMode
             viewModel.enterExploration()
-            Task { try? await EngineManager.shared.ensureInitialized(config: appState.engineConfig) }
+            if !studyMode {
+                Task { try? await EngineManager.shared.ensureInitialized(config: appState.engineConfig) }
+            }
             return
         }
-        Task {
-            await viewModel.startAnalysis(config: appState.engineConfig)
+        if !studyMode {
+            Task {
+                await viewModel.startAnalysis(config: appState.engineConfig)
+            }
         }
     }
 }

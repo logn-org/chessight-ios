@@ -158,9 +158,9 @@ struct LearnTab: View {
     }
 
     private func openingRow(_ name: String, moves: String) -> some View {
-        let pgn = "[Event \"Opening Study\"]\n[White \"White\"]\n[Black \"Black\"]\n[Result \"*\"]\n\n\(moves) *"
+        let pgn = "[Event \"\(name)\"]\n[White \"White\"]\n[Black \"Black\"]\n[Result \"*\"]\n\n\(moves) *"
         return NavigationLink {
-            AnalysisView(pgn: pgn)
+            AnalysisView(pgn: pgn, studyMode: true)
         } label: {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
@@ -186,7 +186,7 @@ struct LearnTab: View {
 
     private func tacticRow(_ name: String, fen: String, description: String) -> some View {
         NavigationLink {
-            AnalysisView(fen: fen)
+            BotGameView(customFEN: fen)
         } label: {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
