@@ -169,22 +169,25 @@ final class BoardEditorViewModel {
     }
 
     func validatePosition() -> String? {
-        var whiteKings = 0, blackKings = 0, totalPieces = 0
+        var whiteKings = 0, blackKings = 0, whitePieces = 0, blackPieces = 0
         for rank in 0..<8 {
             for file in 0..<8 {
                 if let piece = board.piece(at: Square(file: file, rank: rank)) {
-                    totalPieces += 1
-                    if piece.type == .king {
-                        if piece.color == .white { whiteKings += 1 }
-                        else { blackKings += 1 }
+                    if piece.color == .white {
+                        whitePieces += 1
+                        if piece.type == .king { whiteKings += 1 }
+                    } else {
+                        blackPieces += 1
+                        if piece.type == .king { blackKings += 1 }
                     }
                 }
             }
         }
         if whiteKings != 1 { return "Position must have exactly one white king" }
         if blackKings != 1 { return "Position must have exactly one black king" }
-        if totalPieces > 32 { return "Too many pieces on the board" }
-        if totalPieces < 2 { return "Need at least two kings" }
+        if whitePieces > 16 { return "White has too many pieces (max 16)" }
+        if blackPieces > 16 { return "Black has too many pieces (max 16)" }
+        if whitePieces + blackPieces < 2 { return "Need at least two kings" }
         return nil
     }
 }
