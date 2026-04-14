@@ -50,6 +50,16 @@ final class PuzzleViewModel {
         isLoading = false
     }
 
+    /// Load a custom practice puzzle (no API call)
+    func loadCustomPuzzle(title: String, fen: String, pgn: String) {
+        puzzleMode = "practice"
+        isLoading = false
+        error = nil
+        let p = DailyPuzzle(title: title, url: "", publishTime: Date(), fen: fen, pgn: pgn, image: nil)
+        puzzle = p
+        setupPuzzle(p)
+    }
+
     func loadRandomPuzzle() async {
         isLoading = true
         error = nil

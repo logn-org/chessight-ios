@@ -41,13 +41,13 @@ struct LearnTab: View {
             // Row 2: Practice
             HStack(spacing: AppSpacing.md) {
                 NavigationLink {
-                    PracticeCategoryList(title: "Tactics", items: tacticItems)
+                    GuidedPuzzleCategoryList(title: "Tactics", categories: tacticPuzzles, orderedKeys: ["Pin", "Fork", "Skewer", "Discovered Attack", "Double Check"])
                 } label: {
                     studyCard(title: "Tactics", subtitle: "Pins, forks, skewers", icon: "bolt.fill", color: AppColors.brilliant)
                 }
 
                 NavigationLink {
-                    PracticeCategoryList(title: "Checkmates", items: checkmateItems)
+                    GuidedPuzzleCategoryList(title: "Checkmates", categories: checkmatePuzzles, orderedKeys: ["Back Rank Mate", "Smothered Mate", "Arabian Mate", "Queen + Knight Mate", "Epaulette Mate"])
                 } label: {
                     studyCard(title: "Checkmates", subtitle: "Mating patterns", icon: "crown.fill", color: AppColors.blunder)
                 }
@@ -91,19 +91,20 @@ struct LearnTab: View {
 
     // MARK: - Practice Data
 
-    private var tacticItems: [PracticeItem] {[
-        PracticeItem(name: "Pin", fens: PracticeFENs.pins, userColor: .white),
-        PracticeItem(name: "Fork", fens: PracticeFENs.forks, userColor: .white),
-        PracticeItem(name: "Skewer", fens: PracticeFENs.skewers, userColor: .white),
-        PracticeItem(name: "Discovered Attack", fens: PracticeFENs.discoveredAttacks, userColor: .white),
-        PracticeItem(name: "Double Check", fens: PracticeFENs.doubleChecks, userColor: .white),
+    private var tacticPuzzles: [String: [GuidedPuzzle]] {[
+        "Pin": GuidedPuzzles.pins,
+        "Fork": GuidedPuzzles.forks,
+        "Skewer": GuidedPuzzles.skewers,
+        "Discovered Attack": GuidedPuzzles.discoveredAttacks,
+        "Double Check": GuidedPuzzles.doubleChecks,
     ]}
 
-    private var checkmateItems: [PracticeItem] {[
-        PracticeItem(name: "Back Rank Mate", fens: PracticeFENs.backRankMates, userColor: .white, goal: "Deliver back rank checkmate"),
-        PracticeItem(name: "Smothered Mate", fens: PracticeFENs.smotheredMates, userColor: .white, goal: "Deliver smothered checkmate"),
-        PracticeItem(name: "Arabian Mate", fens: PracticeFENs.arabianMates, userColor: .white, goal: "Checkmate with knight + rook"),
-        PracticeItem(name: "Queen + Knight Mate", fens: PracticeFENs.queenKnightMates, userColor: .white, goal: "Checkmate with queen + knight"),
+    private var checkmatePuzzles: [String: [GuidedPuzzle]] {[
+        "Back Rank Mate": GuidedPuzzles.backRankMates,
+        "Smothered Mate": GuidedPuzzles.smotheredMates,
+        "Arabian Mate": GuidedPuzzles.arabianMates,
+        "Queen + Knight Mate": GuidedPuzzles.queenKnightMates,
+        "Epaulette Mate": GuidedPuzzles.epauletteMates,
     ]}
 
     private var endgameItems: [PracticeItem] {[
@@ -135,14 +136,20 @@ struct LearnTab: View {
 struct PracticeItem {
     let name: String
     let fens: [String]
-    /// The color the user plays
     let userColor: PieceColor
-    /// Goal description shown in the UI
     let goal: String
 
     init(name: String, fens: [String], userColor: PieceColor, goal: String = "Find the winning move") {
         self.name = name; self.fens = fens; self.userColor = userColor; self.goal = goal
     }
+}
+
+/// A guided puzzle with a starting position and solution moves
+struct GuidedPuzzle {
+    let name: String
+    let description: String
+    let fen: String
+    let pgn: String  // Solution moves as PGN from the FEN position
 }
 
 // MARK: - Famous Games List
@@ -177,7 +184,105 @@ struct FamousGamesList: View {
 
 // MARK: - Openings List
 
-// MARK: - Practice Category List
+// MARK: - Guided Puzzle Category List
+
+struct GuidedPuzzleCategoryList: View {
+    let title: String
+    let categories: [String: [GuidedPuzzle]]
+    let orderedKeys: [String]
+
+    var body: some View {
+        List {
+            ForEach(orderedKeys, id: \.self) { key in
+                if let puzzles = categories[key] {
+                    Section(key) {
+                        ForEach(puzzles, id: \.name) { puzzle in
+                            NavigationLink {
+                                GuidedPuzzleView(puzzle: puzzle, allPuzzles: puzzles)
+                            } label: {
+                                HStack(spacing: AppSpacing.md) {
+                                    // Mini board preview
+                                    MiniBoardPreview(fen: puzzle.fen)
+                                        .frame(width: 60, height: 60)
+                                        .clipShape(RoundedRectangle(cornerRadius: 4))
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(puzzle.name)
+                                            .font(AppFonts.bodyBold)
+                                            .foregroundStyle(AppColors.textPrimary)
+                                        Text(puzzle.description)
+                                            .font(AppFonts.small)
+                                            .foregroundStyle(AppColors.textMuted)
+                                            .lineLimit(2)
+                                    }
+                                }
+                            }
+                            .listRowBackground(AppColors.surface)
+                        }
+                    }
+                }
+            }
+        }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(AppColors.background)
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+    }
+}
+
+/// Tiny non-interactive board preview showing the position
+struct MiniBoardPreview: View {
+    let fen: String
+
+    var body: some View {
+        let board = ChessBoard(fen: fen)
+        Canvas { context, size in
+            let squareSize = size.width / 8
+
+            for rank in 0..<8 {
+                for file in 0..<8 {
+                    let vRank = 7 - rank
+                    let x = CGFloat(file) * squareSize
+                    let y = CGFloat(vRank) * squareSize
+                    let isLight = (file + rank) % 2 != 0
+
+                    // Square
+                    context.fill(
+                        Path(CGRect(x: x, y: y, width: squareSize, height: squareSize)),
+                        with: .color(isLight ? AppColors.boardLight : AppColors.boardDark)
+                    )
+
+                    // Piece
+                    if let piece = board.piece(at: Square(file: file, rank: rank)) {
+                        let symbol = pieceSymbol(piece)
+                        let font = Font.system(size: squareSize * 0.7)
+                        context.draw(
+                            Text(symbol).font(font),
+                            at: CGPoint(x: x + squareSize / 2, y: y + squareSize / 2)
+                        )
+                    }
+                }
+            }
+        }
+        .aspectRatio(1, contentMode: .fit)
+    }
+
+    private func pieceSymbol(_ piece: ChessPiece) -> String {
+        let white = piece.color == .white
+        switch piece.type {
+        case .king:   return white ? "♔" : "♚"
+        case .queen:  return white ? "♕" : "♛"
+        case .rook:   return white ? "♖" : "♜"
+        case .bishop: return white ? "♗" : "♝"
+        case .knight: return white ? "♘" : "♞"
+        case .pawn:   return white ? "♙" : "♟"
+        }
+    }
+}
+
+// MARK: - Practice Category List (for endgames — bot mode)
 
 struct PracticeCategoryList: View {
     let title: String
