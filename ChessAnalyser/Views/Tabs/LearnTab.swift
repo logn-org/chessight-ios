@@ -5,11 +5,8 @@ struct LearnTab: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: AppSpacing.lg) {
-                    // Study Cards (top)
+                    // Cards
                     studyCards
-
-                    // Practice Section (bot modes)
-                    practiceSection
                 }
                 .padding(.top, AppSpacing.md)
             }
@@ -26,28 +23,46 @@ struct LearnTab: View {
 
     private var studyCards: some View {
         VStack(spacing: AppSpacing.md) {
+            // Row 1: Study
             HStack(spacing: AppSpacing.md) {
                 NavigationLink {
                     FamousGamesList()
                 } label: {
-                    studyCard(
-                        title: "Famous Games",
-                        subtitle: "Study legendary games",
-                        icon: "theatermasks.fill",
-                        color: AppColors.accent
-                    )
+                    studyCard(title: "Famous Games", subtitle: "Study legendary games", icon: "theatermasks.fill", color: AppColors.accent)
                 }
 
                 NavigationLink {
                     OpeningsList()
                 } label: {
-                    studyCard(
-                        title: "Openings",
-                        subtitle: "Learn opening theory",
-                        icon: "flag.fill",
-                        color: AppColors.best
-                    )
+                    studyCard(title: "Openings", subtitle: "Learn opening theory", icon: "flag.fill", color: AppColors.best)
                 }
+            }
+
+            // Row 2: Practice
+            HStack(spacing: AppSpacing.md) {
+                NavigationLink {
+                    PracticeCategoryList(title: "Tactics", items: tacticItems)
+                } label: {
+                    studyCard(title: "Tactics", subtitle: "Pins, forks, skewers", icon: "bolt.fill", color: AppColors.brilliant)
+                }
+
+                NavigationLink {
+                    PracticeCategoryList(title: "Checkmates", items: checkmateItems)
+                } label: {
+                    studyCard(title: "Checkmates", subtitle: "Mating patterns", icon: "crown.fill", color: AppColors.blunder)
+                }
+            }
+
+            // Row 3: Endgames
+            HStack(spacing: AppSpacing.md) {
+                NavigationLink {
+                    PracticeCategoryList(title: "Endgames", items: endgameItems)
+                } label: {
+                    studyCard(title: "Endgames", subtitle: "Win & defend endgames", icon: "flag.checkered", color: AppColors.great)
+                }
+
+                // Placeholder for future content
+                Color.clear.frame(maxWidth: .infinity, maxHeight: 120)
             }
         }
         .padding(.horizontal, AppSpacing.md)
@@ -74,116 +89,45 @@ struct LearnTab: View {
 
     // MARK: - Practice Section
 
-    private var practiceSection: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.md) {
-            Text("Practice")
-                .font(.system(size: 20, weight: .bold))
-                .foregroundStyle(AppColors.textPrimary)
-                .padding(.horizontal, AppSpacing.md)
+    // MARK: - Practice Data
 
-            Text("Play against Stockfish from specific positions")
-                .font(AppFonts.small)
-                .foregroundStyle(AppColors.textMuted)
-                .padding(.horizontal, AppSpacing.md)
+    private var tacticItems: [PracticeItem] {[
+        PracticeItem(name: "Pin", fens: PracticeFENs.pins, userColor: .white),
+        PracticeItem(name: "Fork", fens: PracticeFENs.forks, userColor: .white),
+        PracticeItem(name: "Skewer", fens: PracticeFENs.skewers, userColor: .white),
+        PracticeItem(name: "Discovered Attack", fens: PracticeFENs.discoveredAttacks, userColor: .white),
+        PracticeItem(name: "Double Check", fens: PracticeFENs.doubleChecks, userColor: .white),
+    ]}
 
-            // Tactics (white has the tactical advantage)
-            practiceGroup(title: "Tactics", icon: "bolt.fill", color: AppColors.brilliant, items: [
-                PracticeItem(name: "Pin", fens: PracticeFENs.pins, userColor: .white),
-                PracticeItem(name: "Fork", fens: PracticeFENs.forks, userColor: .white),
-                PracticeItem(name: "Skewer", fens: PracticeFENs.skewers, userColor: .white),
-                PracticeItem(name: "Discovered Attack", fens: PracticeFENs.discoveredAttacks, userColor: .white),
-                PracticeItem(name: "Double Check", fens: PracticeFENs.doubleChecks, userColor: .white),
-            ])
+    private var checkmateItems: [PracticeItem] {[
+        PracticeItem(name: "Back Rank Mate", fens: PracticeFENs.backRankMates, userColor: .white, goal: "Deliver back rank checkmate"),
+        PracticeItem(name: "Smothered Mate", fens: PracticeFENs.smotheredMates, userColor: .white, goal: "Deliver smothered checkmate"),
+        PracticeItem(name: "Arabian Mate", fens: PracticeFENs.arabianMates, userColor: .white, goal: "Checkmate with knight + rook"),
+        PracticeItem(name: "Queen + Knight Mate", fens: PracticeFENs.queenKnightMates, userColor: .white, goal: "Checkmate with queen + knight"),
+    ]}
 
-            // Checkmate Patterns (white delivers the mate)
-            practiceGroup(title: "Checkmate Patterns", icon: "crown.fill", color: AppColors.blunder, items: [
-                PracticeItem(name: "Back Rank Mate", fens: PracticeFENs.backRankMates, userColor: .white, goal: "Deliver back rank checkmate"),
-                PracticeItem(name: "Smothered Mate", fens: PracticeFENs.smotheredMates, userColor: .white, goal: "Deliver smothered checkmate"),
-                PracticeItem(name: "Arabian Mate", fens: PracticeFENs.arabianMates, userColor: .white, goal: "Checkmate with knight + rook"),
-                PracticeItem(name: "Queen + Knight Mate", fens: PracticeFENs.queenKnightMates, userColor: .white, goal: "Checkmate with queen + knight"),
-            ])
-
-            // Endgames (white has the winning material)
-            practiceGroup(title: "Endgames", icon: "flag.checkered", color: AppColors.great, items: [
-                PracticeItem(name: "King + Queen vs King", fens: [
-                    "4k3/8/8/8/8/8/8/4KQ2 w - - 0 1",
-                    "8/8/3k4/8/8/8/1Q6/4K3 w - - 0 1",
-                    "k7/8/8/8/8/8/6Q1/4K3 w - - 0 1",
-                    "7k/8/8/8/8/8/Q7/4K3 w - - 0 1",
-                ], userColor: .white, goal: "Checkmate the lone king"),
-                PracticeItem(name: "King + Rook vs King", fens: [
-                    "4k3/8/8/8/8/8/8/R3K3 w - - 0 1",
-                    "8/8/4k3/8/8/8/R7/4K3 w - - 0 1",
-                    "k7/8/8/8/8/8/7R/4K3 w - - 0 1",
-                    "3k4/8/8/8/8/8/R7/3K4 w - - 0 1",
-                ], userColor: .white, goal: "Checkmate the lone king"),
-                PracticeItem(name: "Defend: King vs King + Pawn", fens: [
-                    "8/8/8/4k3/8/8/4P3/4K3 b - - 0 1",
-                    "8/8/8/8/3k4/8/3P4/3K4 b - - 0 1",
-                    "8/8/8/2k5/8/8/2P5/2K5 b - - 0 1",
-                    "8/8/8/5k2/8/8/5P2/5K2 b - - 0 1",
-                ], userColor: .black, goal: "Force a draw — block the pawn"),
-                PracticeItem(name: "King + 2 Bishops vs King", fens: [
-                    "4k3/8/8/8/8/8/8/2B1KB2 w - - 0 1",
-                    "k7/8/8/8/8/8/8/2B1KB2 w - - 0 1",
-                    "7k/8/8/8/8/8/8/2B1KB2 w - - 0 1",
-                ], userColor: .white, goal: "Checkmate with two bishops"),
-                PracticeItem(name: "Rook + Pawn Endgame", fens: [
-                    "8/5k2/8/4P3/8/8/8/4K2R w - - 0 1",
-                    "8/3k4/8/3P4/8/8/8/3K3R w - - 0 1",
-                    "8/1k6/8/1P6/8/8/8/1K5R w - - 0 1",
-                ], userColor: .white, goal: "Promote the pawn and checkmate"),
-            ])
-        }
-    }
-
-    // MARK: - Practice Group
-
-    private func practiceGroup(title: String, icon: String, color: Color, items: [PracticeItem]) -> some View {
-        VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            HStack(spacing: AppSpacing.sm) {
-                Image(systemName: icon)
-                    .foregroundStyle(color)
-                Text(title)
-                    .font(AppFonts.bodyBold)
-                    .foregroundStyle(AppColors.textPrimary)
-            }
-            .padding(.horizontal, AppSpacing.md)
-
-            ForEach(items, id: \.name) { item in
-                NavigationLink {
-                    BotGameView(
-                        customFEN: item.fens.randomElement()!,
-                        studyTitle: item.name,
-                        autoStart: true,
-                        practiceUserColor: item.userColor,
-                        practiceFENs: item.fens
-                    )
-                } label: {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(item.name)
-                                .font(AppFonts.body)
-                                .foregroundStyle(AppColors.textPrimary)
-                            Text(item.goal)
-                                .font(AppFonts.small)
-                                .foregroundStyle(AppColors.textMuted)
-                        }
-                        Spacer()
-                        Image(systemName: "play.circle.fill")
-                            .foregroundStyle(color.opacity(0.7))
-                        Image(systemName: "chevron.right")
-                            .font(AppFonts.caption)
-                            .foregroundStyle(AppColors.textMuted)
-                    }
-                    .padding(AppSpacing.md)
-                    .background(AppColors.surface)
-                    .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
-                    .padding(.horizontal, AppSpacing.md)
-                }
-            }
-        }
-    }
+    private var endgameItems: [PracticeItem] {[
+        PracticeItem(name: "King + Queen vs King", fens: [
+            "4k3/8/8/8/8/8/8/4KQ2 w - - 0 1", "8/8/3k4/8/8/8/1Q6/4K3 w - - 0 1",
+            "k7/8/8/8/8/8/6Q1/4K3 w - - 0 1", "7k/8/8/8/8/8/Q7/4K3 w - - 0 1",
+        ], userColor: .white, goal: "Checkmate the lone king"),
+        PracticeItem(name: "King + Rook vs King", fens: [
+            "4k3/8/8/8/8/8/8/R3K3 w - - 0 1", "8/8/4k3/8/8/8/R7/4K3 w - - 0 1",
+            "k7/8/8/8/8/8/7R/4K3 w - - 0 1", "3k4/8/8/8/8/8/R7/3K4 w - - 0 1",
+        ], userColor: .white, goal: "Checkmate the lone king"),
+        PracticeItem(name: "Defend: King vs King + Pawn", fens: [
+            "8/8/8/4k3/8/8/4P3/4K3 b - - 0 1", "8/8/8/8/3k4/8/3P4/3K4 b - - 0 1",
+            "8/8/8/2k5/8/8/2P5/2K5 b - - 0 1", "8/8/8/5k2/8/8/5P2/5K2 b - - 0 1",
+        ], userColor: .black, goal: "Force a draw — block the pawn"),
+        PracticeItem(name: "King + 2 Bishops vs King", fens: [
+            "4k3/8/8/8/8/8/8/2B1KB2 w - - 0 1", "k7/8/8/8/8/8/8/2B1KB2 w - - 0 1",
+            "7k/8/8/8/8/8/8/2B1KB2 w - - 0 1",
+        ], userColor: .white, goal: "Checkmate with two bishops"),
+        PracticeItem(name: "Rook + Pawn Endgame", fens: [
+            "8/5k2/8/4P3/8/8/8/4K2R w - - 0 1", "8/3k4/8/3P4/8/8/8/3K3R w - - 0 1",
+            "8/1k6/8/1P6/8/8/8/1K5R w - - 0 1",
+        ], userColor: .white, goal: "Promote the pawn and checkmate"),
+    ]}
 }
 
 // MARK: - Data
@@ -226,6 +170,50 @@ struct FamousGamesList: View {
         .scrollContentBackground(.hidden)
         .background(AppColors.background)
         .navigationTitle("Famous Games")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+    }
+}
+
+// MARK: - Openings List
+
+// MARK: - Practice Category List
+
+struct PracticeCategoryList: View {
+    let title: String
+    let items: [PracticeItem]
+
+    var body: some View {
+        List {
+            ForEach(items, id: \.name) { item in
+                NavigationLink {
+                    BotGameView(
+                        customFEN: item.fens.randomElement()!,
+                        studyTitle: item.name,
+                        autoStart: true,
+                        practiceUserColor: item.userColor,
+                        practiceFENs: item.fens
+                    )
+                } label: {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(item.name)
+                            .font(AppFonts.bodyBold)
+                            .foregroundStyle(AppColors.textPrimary)
+                        Text(item.goal)
+                            .font(AppFonts.small)
+                            .foregroundStyle(AppColors.textMuted)
+                        Text("\(item.fens.count) positions")
+                            .font(AppFonts.small)
+                            .foregroundStyle(AppColors.accent)
+                    }
+                }
+                .listRowBackground(AppColors.surface)
+            }
+        }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(AppColors.background)
+        .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
     }
