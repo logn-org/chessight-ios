@@ -544,7 +544,7 @@ final class AnalysisViewModel {
 
     /// Full analysis: both before and after positions
     private func analyzeExplorationPosition() {
-        guard let board = explorationBoard else { return }
+        guard let board = explorationBoard, board.isValidForEngine() else { return }
         let afterFEN = board.toFEN()
 
         saveCurrentEvalToSticky()

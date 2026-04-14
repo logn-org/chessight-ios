@@ -201,6 +201,13 @@ final class BotGameViewModel {
 
     private func makeBotMove() {
         guard !gameOver else { return }
+
+        // Validate position before calling engine
+        guard board.isValidForEngine() else {
+            CrashLogger.logEngine("Bot move skipped — invalid position for engine")
+            return
+        }
+
         isBotThinking = true
 
         Task {

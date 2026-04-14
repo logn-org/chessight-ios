@@ -49,6 +49,14 @@ final class AnalysisEngine {
     func startAnalysis(game: ParsedGame, depth: Int) {
         guard let stockfish = stockfish else { return }
 
+        // Validate starting position before sending to engine
+        let startFEN = game.moves.first?.fenBefore ?? "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        let startBoard = ChessBoard(fen: startFEN)
+        guard startBoard.isValidForEngine() else {
+            CrashLogger.logEngine("Skipping analysis — invalid starting position")
+            return
+        }
+
         cancelAll()
         currentGame = game
         targetDepth = depth
