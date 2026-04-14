@@ -36,7 +36,7 @@ enum AnalysisDepthPreset: String, Codable, CaseIterable, Identifiable {
 final class EngineConfiguration {
     private static let storageKey = "engine_configuration"
 
-    var depthPreset: AnalysisDepthPreset = .quick { didSet { Analytics.settingsChanged(setting: "depth_preset", oldValue: oldValue.rawValue, newValue: depthPreset.rawValue); save() } }
+    var depthPreset: AnalysisDepthPreset = .standard { didSet { Analytics.settingsChanged(setting: "depth_preset", oldValue: oldValue.rawValue, newValue: depthPreset.rawValue); save() } }
     var threads: Int = 2 { didSet { Analytics.settingsChanged(setting: "threads", oldValue: "\(oldValue)", newValue: "\(threads)"); save() } }
     var hashMB: Int = 64 { didSet { Analytics.settingsChanged(setting: "hash_mb", oldValue: "\(oldValue)", newValue: "\(hashMB)"); save() } }
     var multiPV: Int = 3 { didSet { Analytics.settingsChanged(setting: "multi_pv", oldValue: "\(oldValue)", newValue: "\(multiPV)"); save() } }
