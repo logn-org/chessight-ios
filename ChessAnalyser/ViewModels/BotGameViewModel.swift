@@ -23,6 +23,10 @@ final class BotGameViewModel {
     private var gameStartTime = CFAbsoluteTimeGetCurrent()
     private var initialFEN: String?
 
+    var initialBoard: ChessBoard {
+        initialFEN != nil ? ChessBoard(fen: initialFEN!) : ChessBoard()
+    }
+
     var isBotThinking = false
     var botBestMove: String?
     var botBestMoveUCI: String?

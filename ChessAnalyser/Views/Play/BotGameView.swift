@@ -196,20 +196,27 @@ struct BotGameView: View {
     // MARK: - Bot Game Subviews
 
     private var botGameBotInfo: some View {
-        HStack {
-            Image(systemName: "cpu")
-                .foregroundStyle(AppColors.accent)
-            Text("Stockfish (Depth \(viewModel.botDepth))")
-                .font(AppFonts.bodyBold)
-                .foregroundStyle(AppColors.textPrimary)
-            Spacer()
-            if viewModel.isBotThinking {
-                ProgressView().scaleEffect(0.7).tint(AppColors.accent)
-                Text("Thinking...").font(AppFonts.caption).foregroundStyle(AppColors.textMuted)
+        let botColor = viewModel.playerColor.opposite
+        return VStack(spacing: 0) {
+            HStack {
+                Image(systemName: "cpu")
+                    .foregroundStyle(AppColors.accent)
+                Text("Stockfish (Depth \(viewModel.botDepth))")
+                    .font(AppFonts.bodyBold)
+                    .foregroundStyle(AppColors.textPrimary)
+                Spacer()
+                if viewModel.isBotThinking {
+                    ProgressView().scaleEffect(0.7).tint(AppColors.accent)
+                    Text("Thinking...").font(AppFonts.caption).foregroundStyle(AppColors.textMuted)
+                }
             }
+            CapturedPiecesView(
+                board: viewModel.board,
+                initialBoard: viewModel.initialBoard,
+                capturedByWhite: botColor == .white
+            )
         }
         .padding(.horizontal, AppSpacing.md)
-        .frame(height: 32)
     }
 
     private func botGameBoardSection(boardSize: CGFloat) -> some View {
@@ -309,25 +316,31 @@ struct BotGameView: View {
     }
 
     private var botGamePlayerInfo: some View {
-        HStack {
-            Circle()
-                .fill(viewModel.playerColor == .white ? Color.white : Color.black)
-                .frame(width: 12, height: 12)
-                .overlay(Circle().stroke(AppColors.surfaceLight, lineWidth: 1))
-            if viewModel.gameOver, let result = viewModel.gameResult {
-                Text(result)
-                    .font(AppFonts.captionBold)
-                    .foregroundStyle(AppColors.accent)
-                    .lineLimit(1)
-            } else {
-                Text("You")
-                    .font(AppFonts.bodyBold)
-                    .foregroundStyle(AppColors.textPrimary)
+        VStack(spacing: 0) {
+            HStack {
+                Circle()
+                    .fill(viewModel.playerColor == .white ? Color.white : Color.black)
+                    .frame(width: 12, height: 12)
+                    .overlay(Circle().stroke(AppColors.surfaceLight, lineWidth: 1))
+                if viewModel.gameOver, let result = viewModel.gameResult {
+                    Text(result)
+                        .font(AppFonts.captionBold)
+                        .foregroundStyle(AppColors.accent)
+                        .lineLimit(1)
+                } else {
+                    Text("You")
+                        .font(AppFonts.bodyBold)
+                        .foregroundStyle(AppColors.textPrimary)
+                }
+                Spacer()
             }
-            Spacer()
+            CapturedPiecesView(
+                board: viewModel.board,
+                initialBoard: viewModel.initialBoard,
+                capturedByWhite: viewModel.playerColor == .white
+            )
         }
         .padding(.horizontal, AppSpacing.md)
-        .frame(height: 32)
     }
 
     private var botGameControls: some View {
