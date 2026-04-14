@@ -147,6 +147,28 @@ enum GuidedPuzzles {
         ),
     ]
 
+    static let balestraMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Balestra Mate",
+            description: "Bishop and Queen combine like a pair of scissors",
+            fen: "6k1/4Qpp1/7p/5q2/3bR3/r4B2/P5PP/5K2 b - - 0 37",
+            pgn: "1... Rxf3+ 2. gxf3 Qxf3+ 3. Ke1 Bc3#",
+            previewFEN: "3k4/8/1B2Q3/8/8/8/8/5K2 w - - 0 1",
+            detailed: "The Balestra Mate features the Bishop-Queen pair. The Queen does a great job of covering most of the enemy King's escape squares, while the Bishop moves in to deliver the checkmate. The final position looks like a pair of scissors."
+        ),
+    ]
+
+    static let buckingBroncoMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Bucking Bronco Mate",
+            description: "Knight jumps in to checkmate while Queen chokes the king",
+            fen: "q7/7k/4p1pp/3pN3/3Pb3/2P3QP/r5PK/4R3 w - - 0 1",
+            pgn: "1. Rxe4 dxe4 2. Qxg6+ Kh8 3. Nf7#",
+            previewFEN: "7k/5N2/6Q1/8/8/8/8/5K2 w - - 0 1",
+            detailed: "The Queen-Knight pair is a dangerous attacking duo. In this checkmate, the enemy King is trapped in the corner. The Queen chokes it by controlling all escape squares while the Knight jumps in to deliver the final blow — like a bucking bronco!"
+        ),
+    ]
+
     static let epauletteMates: [GuidedPuzzle] = [
         GuidedPuzzle(
             name: "Epaulette Mate",
