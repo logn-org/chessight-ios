@@ -22,7 +22,7 @@ struct BotGameView: View {
                 .onAppear {
                     if autoStart && showSetup {
                         showSetup = false
-                        viewModel.botDepth = 18
+                        viewModel.botDepth = 8 // Fast responses for practice
                         let fen = currentPracticeFEN ?? customFEN
                         if let color = practiceUserColor {
                             viewModel.startGame(asColor: color, fen: fen, flipped: nil)
@@ -241,6 +241,10 @@ struct BotGameView: View {
                         onSelect: { viewModel.completePromotion(piece: $0) }
                     )
                 }
+
+                if viewModel.gameOver, let result = viewModel.gameResult {
+                    gameEndOverlay(result)
+                }
             }
             .frame(width: boardSize, height: boardSize)
             .padding(.leading, AppSpacing.xs)
@@ -265,6 +269,43 @@ struct BotGameView: View {
                 .frame(height: 24)
             }
         }
+    }
+
+    private func gameEndOverlay(_ result: String) -> some View {
+        let isWin = result.lowercased().contains("wins") && !result.lowercased().contains("resigned")
+            && ((viewModel.playerColor == .white && result.contains("White wins"))
+                || (viewModel.playerColor == .black && result.contains("Black wins")))
+        let isDraw = result.lowercased().contains("draw") || result.lowercased().contains("stalemate")
+            || result.lowercased().contains("insufficient") || result.lowercased().contains("repetition")
+            || result.lowercased().contains("fifty")
+
+        let icon: String
+        let color: Color
+        let title: String
+        if isWin {
+            icon = "crown.fill"; color = AppColors.accent; title = "You Win!"
+        } else if isDraw {
+            icon = "equal.circle.fill"; color = AppColors.textSecondary; title = "Draw"
+        } else {
+            icon = "flag.fill"; color = AppColors.blunder; title = "You Lost"
+        }
+
+        return VStack(spacing: AppSpacing.sm) {
+            Image(systemName: icon)
+                .font(.system(size: 36))
+                .foregroundStyle(color)
+            Text(title)
+                .font(.system(size: 20, weight: .bold))
+                .foregroundStyle(.white)
+            Text(result)
+                .font(AppFonts.body)
+                .foregroundStyle(.white.opacity(0.8))
+                .multilineTextAlignment(.center)
+        }
+        .padding(AppSpacing.xl)
+        .background(.black.opacity(0.7))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .allowsHitTesting(false)
     }
 
     private var botGamePlayerInfo: some View {
@@ -357,12 +398,6 @@ struct BotGameView: View {
                         .clipShape(Capsule())
                 }
             } else if !autoStart {
-                Button { viewModel.resign() } label: {
-                    Image(systemName: "flag.fill")
-                        .font(.body)
-                        .foregroundStyle(AppColors.blunder)
-                }
-            } else {
                 Button { viewModel.resign() } label: {
                     Image(systemName: "flag.fill")
                         .font(.body)

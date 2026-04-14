@@ -136,29 +136,29 @@ struct LearnTab: View {
                     "8/8/3k4/8/8/8/1Q6/4K3 w - - 0 1",
                     "k7/8/8/8/8/8/6Q1/4K3 w - - 0 1",
                     "7k/8/8/8/8/8/Q7/4K3 w - - 0 1",
-                ], userColor: .white),
+                ], userColor: .white, goal: "Checkmate the lone king"),
                 PracticeItem(name: "King + Rook vs King", fens: [
                     "4k3/8/8/8/8/8/8/R3K3 w - - 0 1",
                     "8/8/4k3/8/8/8/R7/4K3 w - - 0 1",
                     "k7/8/8/8/8/8/7R/4K3 w - - 0 1",
                     "3k4/8/8/8/8/8/R7/3K4 w - - 0 1",
-                ], userColor: .white),
-                PracticeItem(name: "King + Pawn vs King", fens: [
-                    "8/8/8/4k3/8/8/4P3/4K3 w - - 0 1",
-                    "8/8/8/8/3k4/8/3P4/3K4 w - - 0 1",
-                    "8/8/8/2k5/8/8/2P5/2K5 w - - 0 1",
-                    "8/8/8/5k2/8/8/5P2/5K2 w - - 0 1",
-                ], userColor: .white),
+                ], userColor: .white, goal: "Checkmate the lone king"),
+                PracticeItem(name: "Defend: King vs King + Pawn", fens: [
+                    "8/8/8/4k3/8/8/4P3/4K3 b - - 0 1",
+                    "8/8/8/8/3k4/8/3P4/3K4 b - - 0 1",
+                    "8/8/8/2k5/8/8/2P5/2K5 b - - 0 1",
+                    "8/8/8/5k2/8/8/5P2/5K2 b - - 0 1",
+                ], userColor: .black, goal: "Force a draw — block the pawn"),
                 PracticeItem(name: "King + 2 Bishops vs King", fens: [
                     "4k3/8/8/8/8/8/8/2B1KB2 w - - 0 1",
                     "k7/8/8/8/8/8/8/2B1KB2 w - - 0 1",
                     "7k/8/8/8/8/8/8/2B1KB2 w - - 0 1",
-                ], userColor: .white),
+                ], userColor: .white, goal: "Checkmate with two bishops"),
                 PracticeItem(name: "Rook + Pawn Endgame", fens: [
                     "8/5k2/8/4P3/8/8/8/4K2R w - - 0 1",
                     "8/3k4/8/3P4/8/8/8/3K3R w - - 0 1",
                     "8/1k6/8/1P6/8/8/8/1K5R w - - 0 1",
-                ], userColor: .white),
+                ], userColor: .white, goal: "Promote the pawn and checkmate"),
             ])
         }
     }
@@ -187,9 +187,14 @@ struct LearnTab: View {
                     )
                 } label: {
                     HStack {
-                        Text(item.name)
-                            .font(AppFonts.body)
-                            .foregroundStyle(AppColors.textPrimary)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(item.name)
+                                .font(AppFonts.body)
+                                .foregroundStyle(AppColors.textPrimary)
+                            Text(item.goal)
+                                .font(AppFonts.small)
+                                .foregroundStyle(AppColors.textMuted)
+                        }
                         Spacer()
                         Image(systemName: "play.circle.fill")
                             .foregroundStyle(color.opacity(0.7))
@@ -212,8 +217,14 @@ struct LearnTab: View {
 struct PracticeItem {
     let name: String
     let fens: [String]
-    /// The color the user plays (the winning/advantaged side)
+    /// The color the user plays
     let userColor: PieceColor
+    /// Goal description shown in the UI
+    let goal: String
+
+    init(name: String, fens: [String], userColor: PieceColor, goal: String = "Find the winning move") {
+        self.name = name; self.fens = fens; self.userColor = userColor; self.goal = goal
+    }
 }
 
 // MARK: - Famous Games List
