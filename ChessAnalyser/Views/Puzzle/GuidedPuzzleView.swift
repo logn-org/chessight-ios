@@ -17,7 +17,10 @@ struct GuidedPuzzleView: View {
     var body: some View {
         GeometryReader { geometry in
             let screenWidth = geometry.size.width
-            let boardSize = max(1, screenWidth - AppSpacing.sm * 2)
+            let isIPad = AppSpacing.isIPad(screenWidth)
+            let boardSize = isIPad
+                ? AppSpacing.boardSize(for: screenWidth, screenHeight: geometry.size.height)
+                : max(1, screenWidth - AppSpacing.sm * 2)
 
             let currentPuzzle = currentPuzzleIndex < allPuzzles.count ? allPuzzles[currentPuzzleIndex] : puzzle
 
