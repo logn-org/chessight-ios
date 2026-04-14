@@ -227,6 +227,68 @@ enum GuidedPuzzles {
         ),
     ]
 
+    static let operaMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Opera Mate",
+            description: "Rook delivers mate protected by Bishop — not on the edge",
+            fen: "4kb1r/p2n1ppp/4q3/4p1B1/4P3/1Q6/PPP2PPP/2KR4 w k - 0 16",
+            pgn: "1. Qb8+ Nxb8 2. Rd8#",
+            previewFEN: "3Rk3/5p2/8/6B1/8/8/8/6K1 w - - 0 1",
+            detailed: "Similar to the h-file mate — both the Rook and Bishop play key roles. The Rook delivers mate while the Bishop protects it. Unlike the h-file mate, the King gets checkmated not on the edges but on the inner files. This is from the famous game played by Paul Morphy."
+        ),
+    ]
+
+    static let mayetMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Mayet's Mate",
+            description: "Rook placed next to the King, supported by a Bishop",
+            fen: "r1b2rk1/ppp2ppp/8/bBQ5/5q2/2P2N1P/3N1PP1/4R1K1 w - - 0 22",
+            pgn: "1. Qxf8+ Kxf8 2. Re8#",
+            previewFEN: "4Rk2/5pp1/2B5/8/8/8/8/6K1 w - - 0 1",
+            detailed: "The Mayet's Mate is a checkmate pattern where a Rook is placed right next to the enemy King while being supported by a Bishop. It's similar to Opera Mate — the difference is that the mate occurs from a different direction. Named after the German player Karl Mayet."
+        ),
+    ]
+
+    static let retiMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Reti's Mate",
+            description: "Bishop delivers the blow while the Rook supports it",
+            fen: "rnb1kb1r/pp3ppp/2p5/4q3/4n3/3Q4/PPPB1PPP/2KR1BNR w kq - 0 1",
+            pgn: "1. Qd8+ Kxd8 2. Bg5+ Kc7 3. Bd8#",
+            previewFEN: "rnbB1b1r/ppk2ppp/2p5/4q3/4n3/8/PPP2PPP/2KR1BNR b - - 3 3",
+            detailed: "Richard Reti won a beautiful game against Savielly Tartakower using this checkmate — and that's where the name comes from! The Bishop delivers the final blow while the Rook supports it. The enemy King's flight squares are blocked by its own pieces."
+        ),
+        GuidedPuzzle(
+            name: "Reti's Mate — Knight Clearance",
+            description: "Sacrifice the knight to unleash the bishop mate",
+            fen: "2kr2nr/pp3ppp/8/4p3/2p1P1b1/2Pn1N2/PPK2PPP/RNB2B1R b - - 0 1",
+            pgn: "1... Ne1+ 2. Nxe1 Bd1#",
+            detailed: "A stunning knight sacrifice clears the diagonal for the bishop to deliver Reti's Mate. The knight gives itself up with check, and when captured, the bishop slides in for checkmate."
+        ),
+    ]
+
+    static let pillsburyMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Pillsbury Mate",
+            description: "Bishop controls the corner, Rook delivers mate on the file",
+            fen: "r6k/pb2n2p/1p3p2/4p3/2PP4/1P6/P1B2PrP/R2Q1R1K b - - 0 1",
+            pgn: "1... Rg1+ 2. Kxg1 Rg8+ 3. Qg4 Rxg4#",
+            previewFEN: "5rk1/5p1p/8/8/8/8/1B6/6RK w - - 0 1",
+            detailed: "Named after Harry Pillsbury, the Bishop controls the corner square of the castled King while the Rook delivers mate on the open file. The escape squares are blocked by the King's own pieces. A brilliant rook sacrifice opens the g-file for the finishing attack."
+        ),
+    ]
+
+    static let morphyMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Morphy's Mate",
+            description: "King trapped in corner — Rook cuts off, Bishop delivers",
+            fen: "5rk1/p4ppp/1p1rp3/3qB3/3PR3/5Q1P/PP3PP1/6K1 w - - 0 1",
+            pgn: "1. Qf6 gxf6 2. Rg4+ Kh8 3. Bxf6#",
+            previewFEN: "7k/7p/8/8/3B2R1/8/8/7K w - - 0 1",
+            detailed: "The enemy King is trapped in the corner. The Rook cuts off important escape squares on the file or rank, and the Bishop moves in to deliver checkmate. Named after the legendary American chess player Paul Morphy — a queen sacrifice sets up the beautiful finish."
+        ),
+    ]
+
     static let epauletteMates: [GuidedPuzzle] = [
         GuidedPuzzle(
             name: "Epaulette Mate",

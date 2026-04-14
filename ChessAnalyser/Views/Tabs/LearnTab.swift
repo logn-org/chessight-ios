@@ -47,7 +47,7 @@ struct LearnTab: View {
                 }
 
                 NavigationLink {
-                    GuidedPuzzleCategoryList(title: "Checkmates", categories: checkmatePuzzles, orderedKeys: ["Epaulette Mate", "Swallow's Tail Mate", "Cozio's Mate", "Kill Box Mate", "Triangle Mate", "Railroad Mate", "Max Lange Mate", "Balestra Mate", "Bucking Bronco Mate", "Sneaky Stallion Mate", "Damiano's Mate", "Lolli's Checkmate", "Back Rank Mate", "Blind Swine Mate", "Lawnmower Mate", "h-File Mate"])
+                    GuidedPuzzleCategoryList(title: "Checkmates", categories: checkmatePuzzles, orderedKeys: ["Epaulette Mate", "Swallow's Tail Mate", "Cozio's Mate", "Kill Box Mate", "Triangle Mate", "Railroad Mate", "Max Lange Mate", "Balestra Mate", "Bucking Bronco Mate", "Sneaky Stallion Mate", "Damiano's Mate", "Lolli's Checkmate", "Back Rank Mate", "Blind Swine Mate", "Lawnmower Mate", "h-File Mate", "Opera Mate", "Mayet's Mate", "Reti's Mate", "Pillsbury Mate", "Morphy's Mate"])
                 } label: {
                     studyCard(title: "Checkmates", subtitle: "Mating patterns", icon: "crown.fill", color: AppColors.blunder)
                 }
@@ -116,6 +116,11 @@ struct LearnTab: View {
         "Blind Swine Mate": GuidedPuzzles.blindSwineMates,
         "Lawnmower Mate": GuidedPuzzles.lawnmowerMates,
         "h-File Mate": GuidedPuzzles.hFileMates,
+        "Opera Mate": GuidedPuzzles.operaMates,
+        "Mayet's Mate": GuidedPuzzles.mayetMates,
+        "Reti's Mate": GuidedPuzzles.retiMates,
+        "Pillsbury Mate": GuidedPuzzles.pillsburyMates,
+        "Morphy's Mate": GuidedPuzzles.morphyMates,
     ]}
 
     private var endgameItems: [PracticeItem] {[
