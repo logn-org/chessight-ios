@@ -8,6 +8,11 @@ struct BotGameView: View {
     var initialFlip: Bool = false
     var studyTitle: String? = nil
     var autoStart: Bool = false
+    /// For practice mode: user always plays this color (the winning side)
+    var practiceUserColor: PieceColor? = nil
+    /// All FENs for this practice pattern (for the Random button)
+    var practiceFENs: [String] = []
+    @State private var currentPracticeFEN: String? = nil
 
     var body: some View {
         if showSetup && !autoStart {
@@ -17,10 +22,35 @@ struct BotGameView: View {
                 .onAppear {
                     if autoStart && showSetup {
                         showSetup = false
-                        viewModel.botDepth = 18 // Standard depth
-                        viewModel.startRandomGame(fen: customFEN, flipped: nil)
+                        viewModel.botDepth = 18
+                        let fen = currentPracticeFEN ?? customFEN
+                        if let color = practiceUserColor {
+                            viewModel.startGame(asColor: color, fen: fen, flipped: nil)
+                        } else {
+                            viewModel.startRandomGame(fen: fen, flipped: nil)
+                        }
                     }
                 }
+        }
+    }
+
+    private func resetPractice() {
+        let fen = currentPracticeFEN ?? customFEN
+        if let color = practiceUserColor {
+            viewModel.startGame(asColor: color, fen: fen, flipped: nil)
+        } else {
+            viewModel.startRandomGame(fen: fen, flipped: nil)
+        }
+    }
+
+    private func randomPractice() {
+        guard !practiceFENs.isEmpty else { return }
+        let newFEN = practiceFENs.randomElement()!
+        currentPracticeFEN = newFEN
+        if let color = practiceUserColor {
+            viewModel.startGame(asColor: color, fen: newFEN, flipped: nil)
+        } else {
+            viewModel.startRandomGame(fen: newFEN, flipped: nil)
         }
     }
 
@@ -293,16 +323,44 @@ struct BotGameView: View {
                 }
             }
 
+            // Practice mode: Reset + Random buttons
+            if autoStart {
+                Button { resetPractice() } label: {
+                    Image(systemName: "arrow.counterclockwise")
+                        .font(.body)
+                        .foregroundStyle(AppColors.textPrimary)
+                }
+                if !practiceFENs.isEmpty {
+                    Button { randomPractice() } label: {
+                        Image(systemName: "shuffle")
+                            .font(.body)
+                            .foregroundStyle(AppColors.accent)
+                    }
+                }
+            }
+
             // Resign / New game
             if viewModel.gameOver {
-                Button { showSetup = true } label: {
-                    Text("New Game")
+                Button {
+                    if autoStart {
+                        resetPractice()
+                    } else {
+                        showSetup = true
+                    }
+                } label: {
+                    Text(autoStart ? "Try Again" : "New Game")
                         .font(AppFonts.captionBold)
                         .foregroundStyle(.white)
                         .padding(.horizontal, AppSpacing.sm)
                         .padding(.vertical, AppSpacing.xs)
                         .background(AppColors.accent)
                         .clipShape(Capsule())
+                }
+            } else if !autoStart {
+                Button { viewModel.resign() } label: {
+                    Image(systemName: "flag.fill")
+                        .font(.body)
+                        .foregroundStyle(AppColors.blunder)
                 }
             } else {
                 Button { viewModel.resign() } label: {

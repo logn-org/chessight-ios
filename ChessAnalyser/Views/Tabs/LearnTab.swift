@@ -86,73 +86,79 @@ struct LearnTab: View {
                 .foregroundStyle(AppColors.textMuted)
                 .padding(.horizontal, AppSpacing.md)
 
-            // Tactics
+            // Tactics (white has the tactical advantage)
             practiceGroup(title: "Tactics", icon: "bolt.fill", color: AppColors.brilliant, items: [
                 PracticeItem(name: "Pin", fens: [
                     "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 0 1",
                     "r2qkbnr/ppp2ppp/2np4/4p1B1/4P1b1/5N2/PPPP1PPP/RN1QKB1R w KQkq - 0 1",
                     "rnbqk2r/pppp1ppp/4pn2/8/1bPP4/2N5/PP2PPPP/R1BQKBNR w KQkq - 0 1",
-                ]),
+                ], userColor: .white),
                 PracticeItem(name: "Fork", fens: [
                     "r1bqkbnr/pppppppp/2n5/8/4N3/8/PPPPPPPP/R1BQKBNR w KQkq - 0 1",
                     "r1bqkb1r/pppppppp/2n2n2/8/3NP3/8/PPPP1PPP/RNBQKB1R w KQkq - 0 1",
                     "r2qkbnr/ppp1pppp/2n5/3p4/3PP1b1/5N2/PPP2PPP/RNBQKB1R w KQkq - 0 1",
-                ]),
+                ], userColor: .white),
                 PracticeItem(name: "Skewer", fens: [
                     "4k3/8/8/8/8/4R3/8/4K3 w - - 0 1",
                     "6k1/8/8/8/8/8/B7/4K3 w - - 0 1",
-                ]),
+                ], userColor: .white),
                 PracticeItem(name: "Discovered Attack", fens: [
                     "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 1",
                     "rnbqkb1r/ppp1pppp/5n2/3p4/3PP3/8/PPP2PPP/RNBQKBNR w KQkq - 0 1",
-                ]),
+                ], userColor: .white),
             ])
 
-            // Checkmate Patterns
+            // Checkmate Patterns (white delivers the mate)
             practiceGroup(title: "Checkmate Patterns", icon: "crown.fill", color: AppColors.blunder, items: [
                 PracticeItem(name: "Back Rank Mate", fens: [
                     "6k1/5ppp/8/8/8/8/8/R3K3 w - - 0 1",
-                    "3r2k1/5ppp/8/8/8/8/5PPP/6K1 b - - 0 1",
                     "r5k1/5ppp/8/8/8/8/5PPP/4R1K1 w - - 0 1",
-                ]),
+                    "5rk1/5ppp/8/8/8/8/8/3RK3 w - - 0 1",
+                ], userColor: .white),
                 PracticeItem(name: "Smothered Mate", fens: [
                     "6rk/5Npp/8/8/8/8/8/4K3 w - - 0 1",
                     "r4rk1/5Npp/8/8/8/8/6PP/6K1 w - - 0 1",
-                ]),
+                ], userColor: .white),
                 PracticeItem(name: "Arabian Mate", fens: [
                     "7k/5N2/6R1/8/8/8/8/4K3 w - - 0 1",
                     "k7/2N5/1R6/8/8/8/8/4K3 w - - 0 1",
-                ]),
-                PracticeItem(name: "Scholar's Mate Setup", fens: [
-                    "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
-                ]),
+                ], userColor: .white),
+                PracticeItem(name: "Queen + Knight Mate", fens: [
+                    "6k1/8/5N2/8/8/8/8/4K2Q w - - 0 1",
+                    "7k/8/8/8/3N4/8/8/4K2Q w - - 0 1",
+                ], userColor: .white),
             ])
 
-            // Endgames
+            // Endgames (white has the winning material)
             practiceGroup(title: "Endgames", icon: "flag.checkered", color: AppColors.great, items: [
                 PracticeItem(name: "King + Queen vs King", fens: [
                     "4k3/8/8/8/8/8/8/4KQ2 w - - 0 1",
                     "8/8/3k4/8/8/8/1Q6/4K3 w - - 0 1",
                     "k7/8/8/8/8/8/6Q1/4K3 w - - 0 1",
-                ]),
+                    "7k/8/8/8/8/8/Q7/4K3 w - - 0 1",
+                ], userColor: .white),
                 PracticeItem(name: "King + Rook vs King", fens: [
                     "4k3/8/8/8/8/8/8/R3K3 w - - 0 1",
                     "8/8/4k3/8/8/8/R7/4K3 w - - 0 1",
                     "k7/8/8/8/8/8/7R/4K3 w - - 0 1",
-                ]),
+                    "3k4/8/8/8/8/8/R7/3K4 w - - 0 1",
+                ], userColor: .white),
                 PracticeItem(name: "King + Pawn vs King", fens: [
-                    "4k3/8/8/8/4P3/8/8/4K3 w - - 0 1",
-                    "8/8/4k3/8/4P3/4K3/8/8 w - - 0 1",
-                    "8/4k3/8/4P3/4K3/8/8/8 w - - 0 1",
-                ]),
+                    "8/8/8/4k3/8/8/4P3/4K3 w - - 0 1",
+                    "8/8/8/8/3k4/8/3P4/3K4 w - - 0 1",
+                    "8/8/8/2k5/8/8/2P5/2K5 w - - 0 1",
+                    "8/8/8/5k2/8/8/5P2/5K2 w - - 0 1",
+                ], userColor: .white),
                 PracticeItem(name: "King + 2 Bishops vs King", fens: [
                     "4k3/8/8/8/8/8/8/2B1KB2 w - - 0 1",
                     "k7/8/8/8/8/8/8/2B1KB2 w - - 0 1",
-                ]),
-                PracticeItem(name: "Rook Endgame", fens: [
+                    "7k/8/8/8/8/8/8/2B1KB2 w - - 0 1",
+                ], userColor: .white),
+                PracticeItem(name: "Rook + Pawn Endgame", fens: [
                     "8/5k2/8/4P3/8/8/8/4K2R w - - 0 1",
-                    "8/8/4k3/4P3/8/8/4r3/4K2R w - - 0 1",
-                ]),
+                    "8/3k4/8/3P4/8/8/8/3K3R w - - 0 1",
+                    "8/1k6/8/1P6/8/8/8/1K5R w - - 0 1",
+                ], userColor: .white),
             ])
         }
     }
@@ -175,7 +181,9 @@ struct LearnTab: View {
                     BotGameView(
                         customFEN: item.fens.randomElement()!,
                         studyTitle: item.name,
-                        autoStart: true
+                        autoStart: true,
+                        practiceUserColor: item.userColor,
+                        practiceFENs: item.fens
                     )
                 } label: {
                     HStack {
@@ -204,6 +212,8 @@ struct LearnTab: View {
 struct PracticeItem {
     let name: String
     let fens: [String]
+    /// The color the user plays (the winning/advantaged side)
+    let userColor: PieceColor
 }
 
 // MARK: - Famous Games List
