@@ -67,6 +67,50 @@ enum GuidedPuzzles {
         GuidedPuzzle(name: "Setup the Mate", description: "Maneuver into the mating position", fen: "6k1/6pp/5N2/8/8/8/6PP/4Q1K1 w - - 0 1", pgn: "1. Qe8+ Kf8 2. Qf7#"),
     ]
 
+    static let swallowTailMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Swallow's Tail Mate",
+            description: "King's retreat blocked by its own pieces standing diagonally backward",
+            fen: "6k1/5p2/4q1p1/7p/1P4r1/PB5K/2Q2P1P/2R3R1 b - - 0 1",
+            pgn: "1... Rg3+ 2. Kxg3 Qg4#",
+            previewFEN: "8/5p1p/6k1/6Q1/7P/8/8/4K3 w - - 0 1",
+            detailed: "In this mating pattern, the King's retreating squares are blocked by its own pieces, standing diagonally backward. The mating pattern resembles a swallow's tail."
+        ),
+    ]
+
+    static let cozioMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Cozio's Mate",
+            description: "King blocked by pieces standing horizontally and vertically",
+            fen: "7R/1Q3r2/1b2rkp1/5p2/3q1P2/8/6R1/7K w - - 0 1",
+            pgn: "1. Rxg6+ Kxg6 2. Qg2+ Kf6 3. Qg5#",
+            previewFEN: "8/8/8/6p1/5qk1/7Q/6K1/8 w - - 0 1",
+            detailed: "This mating pattern is named after Carlos Cozio, who published a study on it in 1766. The King's retreating squares are blocked by its own pieces — one standing horizontally and the other standing vertically."
+        ),
+    ]
+
+    static let killBoxMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Kill Box Mate",
+            description: "Rook and Queen trap the King in a 3×3 box",
+            fen: "1k5r/1pp2p1r/p4bp1/8/2P2B2/1P2Pq2/P2Q2B1/3RR1K1 b - - 0 1",
+            pgn: "1... Rh1+ 2. Bxh1 Rxh1#",
+            previewFEN: "6kR/8/5Q2/8/8/8/6K1/8 w - - 0 1",
+            detailed: "This checkmate pattern occurs when a Rook and Queen work together to checkmate the enemy King in a 3×3 box shape, from which the enemy King cannot escape. The Rook delivers the checkmate while the Queen assists it."
+        ),
+    ]
+
+    static let triangleMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Triangle Mate",
+            description: "Queen, Rook, and King form a triangle",
+            fen: "3rrb2/1R3pk1/3p1n1p/2p1pQ2/2P1Pqp1/3P2R1/5NP1/6K1 w - - 0 1",
+            pgn: "1. Rxg4+ Nxg4 2. Rxf7+ Kg8 3. Qh7#",
+            previewFEN: "6k1/5Q1R/8/8/8/8/6K1/8 w - - 0 1",
+            detailed: "This checkmate looks like a triangle formed by the Queen, the Rook, and the enemy King. The White Queen and Rook checkmate the Black monarch — together, these 3 pieces form a triangle."
+        ),
+    ]
+
     static let epauletteMates: [GuidedPuzzle] = [
         GuidedPuzzle(
             name: "Epaulette Mate",

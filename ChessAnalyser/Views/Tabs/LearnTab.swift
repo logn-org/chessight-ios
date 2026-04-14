@@ -47,7 +47,7 @@ struct LearnTab: View {
                 }
 
                 NavigationLink {
-                    GuidedPuzzleCategoryList(title: "Checkmates", categories: checkmatePuzzles, orderedKeys: ["Epaulette Mate"])
+                    GuidedPuzzleCategoryList(title: "Checkmates", categories: checkmatePuzzles, orderedKeys: ["Epaulette Mate", "Swallow's Tail Mate", "Cozio's Mate", "Kill Box Mate", "Triangle Mate"])
                 } label: {
                     studyCard(title: "Checkmates", subtitle: "Mating patterns", icon: "crown.fill", color: AppColors.blunder)
                 }
@@ -101,6 +101,10 @@ struct LearnTab: View {
 
     private var checkmatePuzzles: [String: [GuidedPuzzle]] {[
         "Epaulette Mate": GuidedPuzzles.epauletteMates,
+        "Swallow's Tail Mate": GuidedPuzzles.swallowTailMates,
+        "Cozio's Mate": GuidedPuzzles.cozioMates,
+        "Kill Box Mate": GuidedPuzzles.killBoxMates,
+        "Triangle Mate": GuidedPuzzles.triangleMates,
     ]}
 
     private var endgameItems: [PracticeItem] {[
