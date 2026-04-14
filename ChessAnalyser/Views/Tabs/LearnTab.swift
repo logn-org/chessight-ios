@@ -47,7 +47,7 @@ struct LearnTab: View {
                 }
 
                 NavigationLink {
-                    GuidedPuzzleCategoryList(title: "Checkmates", categories: checkmatePuzzles, orderedKeys: ["Epaulette Mate", "Swallow's Tail Mate", "Cozio's Mate", "Kill Box Mate", "Triangle Mate", "Railroad Mate", "Max Lange Mate", "Balestra Mate", "Bucking Bronco Mate", "Sneaky Stallion Mate", "Damiano's Mate", "Lolli's Checkmate", "Back Rank Mate", "Blind Swine Mate", "Lawnmower Mate", "h-File Mate", "Opera Mate", "Mayet's Mate", "Reti's Mate", "Pillsbury Mate", "Morphy's Mate"])
+                    GuidedPuzzleCategoryList(title: "Checkmates", categories: checkmatePuzzles, orderedKeys: ["Epaulette Mate", "Swallow's Tail Mate", "Cozio's Mate", "Kill Box Mate", "Triangle Mate", "Railroad Mate", "Max Lange Mate", "Balestra Mate", "Bucking Bronco Mate", "Sneaky Stallion Mate", "Damiano's Mate", "Lolli's Checkmate", "Back Rank Mate", "Blind Swine Mate", "Lawnmower Mate", "h-File Mate", "Opera Mate", "Mayet's Mate", "Reti's Mate", "Pillsbury Mate", "Morphy's Mate", "Greco Mate", "Corner Mate", "Anastasia's Mate", "Arabian Mate", "Vukovic Mate", "Hook Mate", "Anderssen's Mate", "Diagonal Corridor Mate", "Bombardiers' Mate"])
                 } label: {
                     studyCard(title: "Checkmates", subtitle: "Mating patterns", icon: "crown.fill", color: AppColors.blunder)
                 }
@@ -121,6 +121,15 @@ struct LearnTab: View {
         "Reti's Mate": GuidedPuzzles.retiMates,
         "Pillsbury Mate": GuidedPuzzles.pillsburyMates,
         "Morphy's Mate": GuidedPuzzles.morphyMates,
+        "Greco Mate": GuidedPuzzles.grecoMates,
+        "Corner Mate": GuidedPuzzles.cornerMates,
+        "Anastasia's Mate": GuidedPuzzles.anastasiaMates,
+        "Arabian Mate": GuidedPuzzles.arabianMates,
+        "Vukovic Mate": GuidedPuzzles.vukovicMates,
+        "Hook Mate": GuidedPuzzles.hookMates,
+        "Anderssen's Mate": GuidedPuzzles.anderssenMates,
+        "Diagonal Corridor Mate": GuidedPuzzles.diagonalCorridorMates,
+        "Bombardiers' Mate": GuidedPuzzles.bombardiersMates,
     ]}
 
     private var endgameItems: [PracticeItem] {[

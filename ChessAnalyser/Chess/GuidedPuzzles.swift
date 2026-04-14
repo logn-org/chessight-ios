@@ -289,6 +289,105 @@ enum GuidedPuzzles {
         ),
     ]
 
+    static let grecoMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Greco Mate",
+            description: "King exposed on edge — Bishop controls escape, Rook delivers",
+            fen: "1r3r1k/5Bpp/8/p7/P2q4/5R2/1b4PP/1Q3R1K w - - 0 1",
+            pgn: "1. Qxh7+ Kxh7 2. Rh3+ Qh4 3. Rxh4#",
+            previewFEN: "5r1k/6p1/8/8/2B5/8/8/6KR w - - 0 1",
+            detailed: "The enemy King is trapped and exposed on the edge of the board. The Bishop controls one escape square while the other is blocked by its own pieces. The Rook moves in to deliver the final blow. Named after 18th century player Gioachino Greco."
+        ),
+    ]
+
+    static let cornerMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Corner Mate",
+            description: "Rook cuts off escape, Knight delivers in the corner",
+            fen: "6k1/3Q1p2/6p1/P5r1/R1q1n3/7B/7P/5R1K b - - 0 1",
+            pgn: "1... Qxf1+ 2. Bxf1 Nf2#",
+            previewFEN: "7k/5N1p/8/8/8/8/8/6RK w - - 0 1",
+            detailed: "As the name suggests, this checkmate is delivered in the corner. The Rook cuts off important escape squares on the file or rank, and the Knight jumps in to deliver the final attack."
+        ),
+    ]
+
+    static let anastasiaMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Anastasia's Mate",
+            description: "Rook mates on the edge, Knight controls two flight squares",
+            fen: "5rk1/5ppp/3n4/q2N4/8/1R6/2Q2PPP/6K1 w - - 0 1",
+            pgn: "1. Ne7+ Kh8 2. Qxh7+ Kxh7 3. Rh3+ Qh5 4. Rxh5#",
+            previewFEN: "8/4N1pk/8/8/8/7R/8/6K1 w - - 0 1",
+            detailed: "The enemy king is trapped on the edge of the board. The Rook delivers checkmate while the Knight controls two important flight squares. Another flight square is blocked by the King's own pawn."
+        ),
+    ]
+
+    static let arabianMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Arabian Mate",
+            description: "Knight and Rook combine to trap the King in the corner",
+            fen: "3r1b1k/1p3R2/7p/2p4N/p4P2/2K3R1/PP6/3r4 w - - 0 1",
+            pgn: "1. Rh7+ Kxh7 2. Nf6+ Kh8 3. Rg8#",
+            previewFEN: "6Rk/8/5N2/8/8/8/8/6K1 w - - 0 1",
+            detailed: "An important pattern showing the combined power of the Knight and Rook. Together, these pieces cover all of the enemy King's flight squares while it's trapped in the corner. The Rook delivers the checkmate, supported by the Knight."
+        ),
+    ]
+
+    static let vukovicMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Vukovic Mate",
+            description: "Rook, Knight, and pawn combine — Rook delivers the blow",
+            fen: "2r4k/p6p/1b1pPNpB/6P1/2p2p2/8/P1r2PK1/7R w - - 0 1",
+            pgn: "1. Bg7+ Kxg7 2. Rxh7+ Kf8 3. Rf7#",
+            previewFEN: "5k2/5R2/4PN2/8/8/8/8/6K1 w - - 0 1",
+            detailed: "Named after IM Vladimir Vukovic from his book 'The Art of Attack in Chess'. Three pieces work together: the Rook lands the final blow while covering escape squares, the Knight guards another set, and a pawn protects the Rook."
+        ),
+    ]
+
+    static let hookMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Hook Mate",
+            description: "Rook delivers mate, supported by Knight, protected by pawn",
+            fen: "6rk/pp3Qp1/1q5p/3pNP2/n1p5/2P5/PP6/2K1R3 w - - 0 1",
+            pgn: "1. Ng6+ Kh7 2. Qxg8+ Kxg8 3. Re8+ Kf7 4. Rf8#",
+            previewFEN: "5R2/5kp1/6N1/5P2/8/8/8/6K1 w - - 0 1",
+            detailed: "A Rook, Knight, and pawn work together. The Rook delivers mate supported by the Knight, which is protected by a pawn. This makes it impossible for the enemy king to capture either piece. The remaining escape square is blocked by the enemy King's own pawn."
+        ),
+    ]
+
+    static let anderssenMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Anderssen's Mate",
+            description: "Rook mates on 8th rank, supported by a pawn on the 7th",
+            fen: "3r2k1/p4rPp/1b1q3Q/n1p1pP2/1p6/3B1NR1/P4P1P/6RK w - - 0 29",
+            pgn: "1. Qxh7+ Kxh7 2. f6+ Kg8 3. Bh7+ Kxh7 4. Rh3+ Kg8 5. Rh8#",
+            previewFEN: "6kR/5pP1/5P2/8/8/8/8/6K1 w - - 0 1",
+            detailed: "The Rook delivers checkmate on the 8th rank, standing next to the enemy king and supported by a pawn on the 7th rank. Named after Adolf Anderssen, who finished off a beautiful game against Zukerort with this pattern!"
+        ),
+    ]
+
+    static let diagonalCorridorMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Diagonal Corridor Mate",
+            description: "A lone Bishop traps the King on a deadly diagonal",
+            fen: "8/p4B2/8/6pp/R7/1P4Pk/P1r4P/3n2K1 w - - 0 43",
+            pgn: "1. Rh4+ gxh4 2. Be6#",
+            previewFEN: "6bk/7p/8/8/3B4/8/8/6K1 w - - 0 1",
+            detailed: "Sometimes just a lone Bishop can finish off the game. In this beautiful mating pattern, the Bishop traps the enemy King with a deadly blow on a diagonal. A rook sacrifice opens the path for the Bishop's killing move."
+        ),
+    ]
+
+    static let bombardiersMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Bombardiers' Mate",
+            description: "Two Bishops bombard down diagonals to trap the King",
+            fen: "r3kb1r/pppn1ppp/2b1p3/q5B1/3P4/2PQ2N1/PPB2P1P/2K1R1R1 w kq - 0 13",
+            pgn: "1. Rxe6+ fxe6 2. Qg6+ hxg6 3. Bxg6#",
+            previewFEN: "7k/7p/8/3BB3/8/8/8/6K1 w - - 0 1",
+            detailed: "A rare pattern most chess literature hasn't covered. Two Bishops bombard down their respective diagonals, trapping the enemy King. One delivers the checkmate while the other controls the escape squares. Sacrifices clear the way for the double-bishop finish."
+        ),
+    ]
+
     static let epauletteMates: [GuidedPuzzle] = [
         GuidedPuzzle(
             name: "Epaulette Mate",
