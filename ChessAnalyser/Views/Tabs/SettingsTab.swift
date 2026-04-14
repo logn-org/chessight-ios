@@ -136,6 +136,19 @@ struct SettingsTab: View {
                     }
                     .listRowBackground(AppColors.surface)
 
+                    Link(destination: URL(string: "https://tally.so/r/44olMo") ?? URL(fileURLWithPath: "/")) {
+                        HStack {
+                            Image(systemName: "lightbulb.fill")
+                                .foregroundStyle(AppColors.inaccuracy)
+                            Text("Feature Request & Feedback")
+                                .foregroundStyle(AppColors.textPrimary)
+                            Spacer()
+                            Image(systemName: "arrow.up.right.square")
+                                .foregroundStyle(AppColors.accent)
+                        }
+                    }
+                    .listRowBackground(AppColors.surface)
+
                     Link(destination: URL(string: "https://logn-org.github.io/policies/chessight/privacy-policy.html") ?? URL(fileURLWithPath: "/")) {
                         HStack {
                             Text("Privacy Policy")
