@@ -21,6 +21,7 @@ final class BotGameViewModel {
 
     // Engine state
     private var gameStartTime = CFAbsoluteTimeGetCurrent()
+    private var initialFEN: String?
 
     var isBotThinking = false
     var botBestMove: String?
@@ -37,6 +38,7 @@ final class BotGameViewModel {
     // MARK: - Setup
 
     func startGame(asColor: PieceColor, fen: String? = nil, flipped: Bool? = nil) {
+        initialFEN = fen
         if let fen = fen {
             board = ChessBoard(fen: fen)
         } else {
@@ -372,7 +374,7 @@ final class BotGameViewModel {
     }
 
     private func rebuildBoard() {
-        board = ChessBoard()
+        board = initialFEN != nil ? ChessBoard(fen: initialFEN!) : ChessBoard()
         for move in moveHistory {
             _ = board.makeMoveSAN(move.san)
         }
