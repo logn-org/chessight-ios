@@ -17,13 +17,14 @@ struct GuidedPuzzleView: View {
             let boardSize = max(1, screenWidth - AppSpacing.sm * 2)
 
             VStack(spacing: 0) {
-                // Description
-                Text(puzzle.description)
+                // Detailed description
+                Text(puzzle.detailedDescription)
                     .font(AppFonts.body)
                     .foregroundStyle(AppColors.textSecondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, AppSpacing.md)
-                    .frame(height: 32)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.bottom, AppSpacing.xs)
 
                 // Status
                 statusBar

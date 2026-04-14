@@ -47,7 +47,7 @@ struct LearnTab: View {
                 }
 
                 NavigationLink {
-                    GuidedPuzzleCategoryList(title: "Checkmates", categories: checkmatePuzzles, orderedKeys: ["Back Rank Mate", "Smothered Mate", "Arabian Mate", "Queen + Knight Mate", "Epaulette Mate"])
+                    GuidedPuzzleCategoryList(title: "Checkmates", categories: checkmatePuzzles, orderedKeys: ["Epaulette Mate"])
                 } label: {
                     studyCard(title: "Checkmates", subtitle: "Mating patterns", icon: "crown.fill", color: AppColors.blunder)
                 }
@@ -100,10 +100,6 @@ struct LearnTab: View {
     ]}
 
     private var checkmatePuzzles: [String: [GuidedPuzzle]] {[
-        "Back Rank Mate": GuidedPuzzles.backRankMates,
-        "Smothered Mate": GuidedPuzzles.smotheredMates,
-        "Arabian Mate": GuidedPuzzles.arabianMates,
-        "Queen + Knight Mate": GuidedPuzzles.queenKnightMates,
         "Epaulette Mate": GuidedPuzzles.epauletteMates,
     ]}
 
@@ -147,9 +143,20 @@ struct PracticeItem {
 /// A guided puzzle with a starting position and solution moves
 struct GuidedPuzzle {
     let name: String
-    let description: String
+    let shortDescription: String
+    let detailedDescription: String
     let fen: String
-    let pgn: String  // Solution moves as PGN from the FEN position
+    let pgn: String
+    let previewFEN: String?  // Optional separate FEN for the list preview
+
+    init(name: String, description: String, fen: String, pgn: String, previewFEN: String? = nil, detailed: String? = nil) {
+        self.name = name
+        self.shortDescription = description
+        self.detailedDescription = detailed ?? description
+        self.fen = fen
+        self.pgn = pgn
+        self.previewFEN = previewFEN
+    }
 }
 
 // MARK: - Famous Games List
@@ -194,32 +201,31 @@ struct GuidedPuzzleCategoryList: View {
     var body: some View {
         List {
             ForEach(orderedKeys, id: \.self) { key in
-                if let puzzles = categories[key] {
-                    Section(key) {
-                        ForEach(puzzles, id: \.name) { puzzle in
-                            NavigationLink {
-                                GuidedPuzzleView(puzzle: puzzle, allPuzzles: puzzles)
-                            } label: {
-                                HStack(spacing: AppSpacing.md) {
-                                    // Mini board preview
-                                    MiniBoardPreview(fen: puzzle.fen)
-                                        .frame(width: 60, height: 60)
-                                        .clipShape(RoundedRectangle(cornerRadius: 4))
+                if let puzzles = categories[key], let first = puzzles.first {
+                    NavigationLink {
+                        GuidedPuzzleView(puzzle: first, allPuzzles: puzzles)
+                    } label: {
+                        HStack(spacing: AppSpacing.md) {
+                            MiniBoardPreview(fen: first.previewFEN ?? first.fen)
+                                .frame(width: 64, height: 64)
+                                .clipShape(RoundedRectangle(cornerRadius: 6))
 
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(puzzle.name)
-                                            .font(AppFonts.bodyBold)
-                                            .foregroundStyle(AppColors.textPrimary)
-                                        Text(puzzle.description)
-                                            .font(AppFonts.small)
-                                            .foregroundStyle(AppColors.textMuted)
-                                            .lineLimit(2)
-                                    }
-                                }
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(key)
+                                    .font(AppFonts.bodyBold)
+                                    .foregroundStyle(AppColors.textPrimary)
+                                Text(first.shortDescription)
+                                    .font(AppFonts.small)
+                                    .foregroundStyle(AppColors.textMuted)
+                                    .lineLimit(2)
+                                Text("\(puzzles.count) puzzles")
+                                    .font(AppFonts.small)
+                                    .foregroundStyle(AppColors.accent)
                             }
-                            .listRowBackground(AppColors.surface)
                         }
+                        .padding(.vertical, AppSpacing.xs)
                     }
+                    .listRowBackground(AppColors.surface)
                 }
             }
         }
@@ -232,53 +238,52 @@ struct GuidedPuzzleCategoryList: View {
     }
 }
 
-/// Tiny non-interactive board preview showing the position
+/// Tiny non-interactive board preview using actual piece images
 struct MiniBoardPreview: View {
     let fen: String
 
     var body: some View {
         let board = ChessBoard(fen: fen)
-        Canvas { context, size in
-            let squareSize = size.width / 8
+        GeometryReader { geometry in
+            let size = min(geometry.size.width, geometry.size.height)
+            let squareSize = size / 8
 
-            for rank in 0..<8 {
-                for file in 0..<8 {
-                    let vRank = 7 - rank
-                    let x = CGFloat(file) * squareSize
-                    let y = CGFloat(vRank) * squareSize
-                    let isLight = (file + rank) % 2 != 0
+            ZStack {
+                // Squares
+                ForEach(0..<8, id: \.self) { rank in
+                    ForEach(0..<8, id: \.self) { file in
+                        let vRank = 7 - rank
+                        let isLight = (file + rank) % 2 != 0
+                        Rectangle()
+                            .fill(isLight ? AppColors.boardLight : AppColors.boardDark)
+                            .frame(width: squareSize, height: squareSize)
+                            .position(
+                                x: CGFloat(file) * squareSize + squareSize / 2,
+                                y: CGFloat(vRank) * squareSize + squareSize / 2
+                            )
+                    }
+                }
 
-                    // Square
-                    context.fill(
-                        Path(CGRect(x: x, y: y, width: squareSize, height: squareSize)),
-                        with: .color(isLight ? AppColors.boardLight : AppColors.boardDark)
-                    )
-
-                    // Piece
-                    if let piece = board.piece(at: Square(file: file, rank: rank)) {
-                        let symbol = pieceSymbol(piece)
-                        let font = Font.system(size: squareSize * 0.7)
-                        context.draw(
-                            Text(symbol).font(font),
-                            at: CGPoint(x: x + squareSize / 2, y: y + squareSize / 2)
-                        )
+                // Pieces (using asset images)
+                ForEach(0..<8, id: \.self) { rank in
+                    ForEach(0..<8, id: \.self) { file in
+                        if let piece = board.piece(at: Square(file: file, rank: rank)) {
+                            let vRank = 7 - rank
+                            Image(piece.assetName)
+                                .resizable()
+                                .interpolation(.high)
+                                .frame(width: squareSize * 0.85, height: squareSize * 0.85)
+                                .position(
+                                    x: CGFloat(file) * squareSize + squareSize / 2,
+                                    y: CGFloat(vRank) * squareSize + squareSize / 2
+                                )
+                        }
                     }
                 }
             }
+            .frame(width: size, height: size)
         }
         .aspectRatio(1, contentMode: .fit)
-    }
-
-    private func pieceSymbol(_ piece: ChessPiece) -> String {
-        let white = piece.color == .white
-        switch piece.type {
-        case .king:   return white ? "♔" : "♚"
-        case .queen:  return white ? "♕" : "♛"
-        case .rook:   return white ? "♖" : "♜"
-        case .bishop: return white ? "♗" : "♝"
-        case .knight: return white ? "♘" : "♞"
-        case .pawn:   return white ? "♙" : "♟"
-        }
     }
 }
 
