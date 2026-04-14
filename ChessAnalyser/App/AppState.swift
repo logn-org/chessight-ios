@@ -15,12 +15,14 @@ final class AppState {
 
     enum AppTab: Int, CaseIterable {
         case home = 0
-        case profiles = 1
-        case settings = 2
+        case learn = 1
+        case profiles = 2
+        case settings = 3
 
         var title: String {
             switch self {
             case .home: return "Home"
+            case .learn: return "Learn"
             case .profiles: return "Profiles"
             case .settings: return "Settings"
             }
@@ -29,6 +31,7 @@ final class AppState {
         var icon: String {
             switch self {
             case .home: return "house.fill"
+            case .learn: return "book.fill"
             case .profiles: return "person.2.fill"
             case .settings: return "gearshape.fill"
             }

@@ -13,6 +13,12 @@ struct ContentView: View {
                 }
                 .tag(AppState.AppTab.home)
 
+            LearnTab()
+                .tabItem {
+                    Label("Learn", systemImage: "book.fill")
+                }
+                .tag(AppState.AppTab.learn)
+
             ProfilesTab()
                 .tabItem {
                     Label("Profiles", systemImage: "person.2.fill")

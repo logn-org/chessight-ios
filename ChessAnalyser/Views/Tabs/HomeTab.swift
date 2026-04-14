@@ -94,39 +94,9 @@ struct HomeTab: View {
                 }
             }
 
-            // Sample Games + Recent in two columns
-            HStack(alignment: .top, spacing: AppSpacing.lg) {
-                // Sample Games
-                VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                    Text("Sample Games")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(AppColors.textPrimary)
-
-                    ForEach(SampleGames.all, id: \.name) { sample in
-                        NavigationLink {
-                            AnalysisView(pgn: sample.pgn)
-                        } label: {
-                            HStack {
-                                Image(systemName: "theatermasks.fill")
-                                    .font(.title3)
-                                    .foregroundStyle(AppColors.accent)
-                                Text(sample.name)
-                                    .font(.system(size: 16))
-                                    .foregroundStyle(AppColors.textPrimary)
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .foregroundStyle(AppColors.textMuted)
-                            }
-                            .padding(AppSpacing.lg)
-                            .background(AppColors.surface)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                        }
-                    }
-                }
-                .frame(maxWidth: .infinity)
-
-                // Recent Analyses
-                if !recentAnalyses.isEmpty {
+            // Recent Analyses
+            if !recentAnalyses.isEmpty {
+                HStack(alignment: .top, spacing: AppSpacing.lg) {
                     VStack(alignment: .leading, spacing: AppSpacing.sm) {
                         Text("Recent Analyses")
                             .font(.system(size: 18, weight: .semibold))
@@ -224,36 +194,6 @@ struct HomeTab: View {
                 }
             }
             .padding(.horizontal, AppSpacing.md)
-
-            // Sample Games
-            VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                Text("Sample Games")
-                    .font(AppFonts.subtitle)
-                    .foregroundStyle(AppColors.textPrimary)
-                    .padding(.horizontal, AppSpacing.md)
-
-                ForEach(SampleGames.all, id: \.name) { sample in
-                    NavigationLink {
-                        AnalysisView(pgn: sample.pgn)
-                    } label: {
-                        HStack {
-                            Image(systemName: "theatermasks.fill")
-                                .foregroundStyle(AppColors.accent)
-                            Text(sample.name)
-                                .font(AppFonts.body)
-                                .foregroundStyle(AppColors.textPrimary)
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(AppFonts.caption)
-                                .foregroundStyle(AppColors.textMuted)
-                        }
-                        .padding(AppSpacing.md)
-                        .background(AppColors.surface)
-                        .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
-                    }
-                    .padding(.horizontal, AppSpacing.md)
-                }
-            }
 
             // Recent Analyses
             if !recentAnalyses.isEmpty {
