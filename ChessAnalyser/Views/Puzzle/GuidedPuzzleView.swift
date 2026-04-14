@@ -198,40 +198,52 @@ struct GuidedPuzzleView: View {
                     .animation(.easeInOut(duration: 0.3), value: viewModel.wrongMove)
             )
 
-            // Controls
-            HStack(spacing: AppSpacing.lg) {
-                Button { viewModel.isFlipped.toggle() } label: {
-                    Image(systemName: "arrow.up.arrow.down")
-                }
+            // Controls — block buttons
+            VStack(spacing: AppSpacing.sm) {
+                HStack(spacing: AppSpacing.sm) {
+                    actionButton(icon: "arrow.up.arrow.down", label: "Flip", color: AppColors.surface) {
+                        viewModel.isFlipped.toggle()
+                    }
 
-                Button {
-                    viewModel.loadCustomPuzzle(title: currentPuzzle.name, fen: currentPuzzle.fen, pgn: currentPuzzle.pgn)
-                    showHint = false
-                    hintMoveUCI = nil
-                } label: {
-                    Image(systemName: "arrow.counterclockwise")
-                }
+                    actionButton(icon: "arrow.counterclockwise", label: "Reset", color: AppColors.surface) {
+                        viewModel.loadCustomPuzzle(title: currentPuzzle.name, fen: currentPuzzle.fen, pgn: currentPuzzle.pgn)
+                        showHint = false
+                        hintMoveUCI = nil
+                    }
 
-                Button { toggleHint() } label: {
-                    Image(systemName: showHint ? "lightbulb.fill" : "lightbulb")
-                        .foregroundStyle(showHint ? AppColors.accent : AppColors.textPrimary)
-                }
+                    actionButton(icon: showHint ? "lightbulb.fill" : "lightbulb", label: "Hint", color: showHint ? AppColors.accent.opacity(0.2) : AppColors.surface) {
+                        toggleHint()
+                    }
 
-                // Back to learn mode
-                Button {
-                    mode = .learn
-                    showHint = false
-                    hintMoveUCI = nil
-                } label: {
-                    Image(systemName: "eye.fill")
-                        .foregroundStyle(AppColors.great)
+                    actionButton(icon: "eye.fill", label: "Preview", color: AppColors.surface) {
+                        mode = .learn
+                        showHint = false
+                        hintMoveUCI = nil
+                    }
                 }
             }
-            .font(.title3)
-            .foregroundStyle(AppColors.textPrimary)
-            .padding(.vertical, AppSpacing.sm)
+            .padding(.horizontal, AppSpacing.md)
+            .padding(.top, AppSpacing.md)
 
             Spacer()
+        }
+    }
+
+    // MARK: - Action Button
+
+    private func actionButton(icon: String, label: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 18))
+                Text(label)
+                    .font(.system(size: 11, weight: .medium))
+            }
+            .foregroundStyle(AppColors.textPrimary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, AppSpacing.md)
+            .background(color)
+            .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
         }
     }
 
