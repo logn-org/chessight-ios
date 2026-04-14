@@ -16,20 +16,21 @@ struct AnalysisView: View {
     let profileUsername: String?
     let initialFlip: Bool
     let studyMode: Bool
+    let studyTitle: String?
 
-    init(pgn: String, studyMode: Bool = false) {
+    init(pgn: String, studyMode: Bool = false, studyTitle: String? = nil) {
         self.pgn = pgn; self.fen = nil; self.chessComGame = nil
-        self.profileUsername = nil; self.initialFlip = false; self.studyMode = studyMode
+        self.profileUsername = nil; self.initialFlip = false; self.studyMode = studyMode; self.studyTitle = studyTitle
     }
 
-    init(fen: String, initialFlip: Bool = false, studyMode: Bool = false) {
+    init(fen: String, initialFlip: Bool = false, studyMode: Bool = false, studyTitle: String? = nil) {
         self.pgn = nil; self.fen = fen; self.chessComGame = nil
-        self.profileUsername = nil; self.initialFlip = initialFlip; self.studyMode = studyMode
+        self.profileUsername = nil; self.initialFlip = initialFlip; self.studyMode = studyMode; self.studyTitle = studyTitle
     }
 
     init(game: ChessComGame, profileUsername: String? = nil) {
         self.pgn = nil; self.fen = nil; self.chessComGame = game
-        self.profileUsername = profileUsername; self.initialFlip = false; self.studyMode = false
+        self.profileUsername = profileUsername; self.initialFlip = false; self.studyMode = false; self.studyTitle = nil
     }
 
     var isFENMode: Bool { fen != nil }
@@ -54,7 +55,7 @@ struct AnalysisView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) {
-                Text(viewModel.gameState.result)
+                Text(studyTitle ?? viewModel.gameState.result)
                     .font(AppFonts.bodyBold)
                     .foregroundStyle(AppColors.textPrimary)
             }

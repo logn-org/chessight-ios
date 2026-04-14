@@ -6,6 +6,7 @@ struct BotGameView: View {
     @State private var showSetup = true
     var customFEN: String? = nil
     var initialFlip: Bool = false
+    var studyTitle: String? = nil
 
     var body: some View {
         if showSetup {
@@ -149,7 +150,7 @@ struct BotGameView: View {
             }
         }
         .background(AppColors.background)
-        .navigationTitle("vs Stockfish")
+        .navigationTitle(studyTitle ?? "vs Stockfish")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
     }
