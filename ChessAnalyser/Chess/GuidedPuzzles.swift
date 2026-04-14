@@ -41,32 +41,6 @@ enum GuidedPuzzles {
 
     // MARK: - Checkmate Patterns
 
-    static let backRankMates: [GuidedPuzzle] = [
-        GuidedPuzzle(name: "Classic Back Rank", description: "Deliver checkmate on the 8th rank", fen: "6k1/5ppp/8/8/8/8/8/R3K3 w - - 0 1", pgn: "1. Ra8#"),
-        GuidedPuzzle(name: "Rook Sacrifice Back Rank", description: "Sacrifice to open the back rank", fen: "2r3k1/5ppp/8/8/8/8/5PPP/1R2R1K1 w - - 0 1", pgn: "1. Re8+ Rxe8 2. Rxe8#"),
-        GuidedPuzzle(name: "Queen Back Rank", description: "Use the queen for back rank mate", fen: "5rk1/5ppp/8/8/8/4Q3/5PPP/6K1 w - - 0 1", pgn: "1. Qe8"),
-        GuidedPuzzle(name: "Double Rook Back Rank", description: "Two rooks combine for the kill", fen: "4r1k1/5ppp/8/8/8/8/5PPP/RR4K1 w - - 0 1", pgn: "1. Rb8 Rxb8 2. Rxb8#"),
-        GuidedPuzzle(name: "Back Rank with Deflection", description: "Deflect the defender then mate", fen: "3r2k1/5ppp/8/1Q6/8/8/5PPP/6K1 w - - 0 1", pgn: "1. Qb8"),
-    ]
-
-    static let smotheredMates: [GuidedPuzzle] = [
-        GuidedPuzzle(name: "Classic Smothered Mate", description: "Knight mates the trapped king", fen: "6rk/5Npp/8/8/8/8/8/4K3 w - - 0 1", pgn: "1. Nh6"),
-        GuidedPuzzle(name: "Philidor's Legacy", description: "The famous queen sacrifice into smothered mate", fen: "r4rk1/5ppp/8/1N6/8/8/5PPP/4Q1K1 w - - 0 1", pgn: "1. Nd6 Rf6 2. Qe8+ Rf8 3. Qxf8+"),
-        GuidedPuzzle(name: "Smothered by Own Pieces", description: "The king has no escape squares", fen: "r5rk/5Npp/8/8/8/8/6PP/6K1 w - - 0 1", pgn: "1. Nh6"),
-    ]
-
-    static let arabianMates: [GuidedPuzzle] = [
-        GuidedPuzzle(name: "Classic Arabian Mate", description: "Knight and rook deliver corner checkmate", fen: "7k/5N2/6R1/8/8/8/8/4K3 w - - 0 1", pgn: "1. Rh6"),
-        GuidedPuzzle(name: "Arabian Mate Setup", description: "Position the rook for the kill", fen: "7k/5N2/8/8/8/8/8/4K2R w - - 0 1", pgn: "1. Rh6"),
-        GuidedPuzzle(name: "Corner Arabian Mate", description: "Trap the king in the corner", fen: "k7/2N5/1R6/8/8/8/8/4K3 w - - 0 1", pgn: "1. Ra6#"),
-    ]
-
-    static let queenKnightMates: [GuidedPuzzle] = [
-        GuidedPuzzle(name: "Queen + Knight Mate", description: "Queen and knight combine for checkmate", fen: "6k1/8/5N2/8/8/8/8/4K2Q w - - 0 1", pgn: "1. Qh7#"),
-        GuidedPuzzle(name: "Knight Covers Escape", description: "Knight blocks the king's escape route", fen: "7k/8/5N2/8/8/8/6Q1/4K3 w - - 0 1", pgn: "1. Qg8#"),
-        GuidedPuzzle(name: "Setup the Mate", description: "Maneuver into the mating position", fen: "6k1/6pp/5N2/8/8/8/6PP/4Q1K1 w - - 0 1", pgn: "1. Qe8+ Kf8 2. Qf7#"),
-    ]
-
     static let swallowTailMates: [GuidedPuzzle] = [
         GuidedPuzzle(
             name: "Swallow's Tail Mate",
@@ -177,6 +151,79 @@ enum GuidedPuzzles {
             pgn: "1... Rh2+ 2. Kxh2 Qh3+ 3. Kg1 Nxf3#",
             previewFEN: "6k1/4N2p/5Q2/8/8/8/8/5K2 w - - 0 1",
             detailed: "Similar to the Bucking Bronco, but the enemy King isn't stuck in the corner — it's on the edge of the board, with an escape square blocked by one of its own pieces. The Queen chokes the remaining escape squares, and the Knight sneaks in to deliver the final checkmate."
+        ),
+    ]
+
+    static let damianoMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Damiano's Mate",
+            description: "Queen checkmates on the 7th rank, protected by an ally",
+            fen: "r3rqk1/6p1/5pP1/8/8/1pP5/1P6/1KQR3R w - - 0 1",
+            pgn: "1. Rh8+ Kxh8 2. Rh1+ Kg8 3. Rh8+ Kxh8 4. Qh1+ Kg8 5. Qh7#",
+            previewFEN: "r3rqk1/6pQ/5pP1/8/8/1pP5/1P6/1K6 b - - 3 5",
+            detailed: "The Queen delivers checkmate through the 7th rank from the edge of the board, protected by an ally. The King's escape squares are blocked or controlled. First published by Pedro Damiano, a Portuguese chess player in 1512 — one of the oldest mating patterns."
+        ),
+        GuidedPuzzle(
+            name: "Damiano's Mate — Rook Clearance",
+            description: "Sacrifice both rooks to clear the way for the Queen",
+            fen: "r4rk1/2p1q1p1/5pP1/1p1p1b2/p1nP4/5PB1/PPP3P1/1KQR3R w - - 0 1",
+            pgn: "1. Rh8+ Kxh8 2. Rh1+ Kg8 3. Rh8+ Kxh8 4. Qh1+ Kg8 5. Qh7#",
+            detailed: "The Rooks clear the way for the Queen by sacrificing themselves. Two rook sacrifices force the king back, then the Queen lands the fatal blow on h7."
+        ),
+    ]
+
+    static let lolliMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Lolli's Checkmate",
+            description: "Queen delivers the blow against a castled King, protected by a pawn",
+            fen: "2br1rk1/pp3p1p/2p2Pp1/4B3/3p2Pq/3P3P/PP4P1/R1Q2R1K w - - 0 1",
+            pgn: "1. Bg3 Qxg3 2. Qh6 Rd6 3. Qg7#",
+            previewFEN: "6k1/5pQp/5Pp1/8/8/8/8/6K1 w - - 0 1",
+            detailed: "A common checkmating pattern where the Queen lands the final blow against a castled King while protected by the pawn. The key is deflecting the defender first — then the Queen slides into the deadly g7 square."
+        ),
+    ]
+
+    static let backRankMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Back Rank Mate",
+            description: "King trapped on the last rank behind its own pawns",
+            fen: "4r1k1/1p3pp1/2p1b2p/8/QP6/8/P4PPP/6K1 b - - 0 1",
+            pgn: "1... Bb3 2. Qxb3 Re1#",
+            previewFEN: "4R1k1/5ppp/8/8/8/8/8/6K1 w - - 0 1",
+            detailed: "The most popular checkmate pattern! The enemy king is trapped on the last rank behind its own pawns and gets checkmated by a Rook or Queen. The key is often clearing the path — here the bishop sacrifice opens the e-file."
+        ),
+    ]
+
+    static let blindSwineMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Blind Swine Mate",
+            description: "Two Rooks on the 7th rank deliver checkmate",
+            fen: "2k5/pp3ppp/2pq4/8/PP6/2P1P1NP/1r1r1P2/2R1QRK1 b - - 0 25",
+            pgn: "1... Qxg3+ 2. fxg3 Rg2+ 3. Kh1 Rh2+ 4. Kg1 Rbg2#",
+            previewFEN: "r4rk1/6RR/8/8/8/8/8/6K1 w - - 0 1",
+            detailed: "A rook is powerful on the 7th rank — and two rooks are devastating. In the Blind Swine mate, two Rooks coordinate on the 7th rank to deliver checkmate. The queen sacrifice clears the way for the rooks to dominate."
+        ),
+    ]
+
+    static let lawnmowerMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "Lawnmower Mate",
+            description: "Two major pieces push the king to the edge and checkmate",
+            fen: "r3r2k/1p5p/3p1b2/q1p5/2P1Q3/6R1/8/1K3R2 w - - 0 1",
+            pgn: "1. Qxh7+ Kxh7 2. Rh1+ Bh4 3. Rxh4#",
+            previewFEN: "1R4k1/R7/8/8/8/8/8/6K1 w - - 0 1",
+            detailed: "Two major pieces (Rooks or Rook + Queen) work together to push the enemy king towards the edge of the board. Like a lawnmower cutting across the board — methodical and unstoppable."
+        ),
+    ]
+
+    static let hFileMates: [GuidedPuzzle] = [
+        GuidedPuzzle(
+            name: "h-File Mate",
+            description: "Rook delivers mate along the h-file, protected by a piece",
+            fen: "2k4r/ppp3q1/2b3r1/8/2Q5/6P1/PPP1NR1P/5RK1 b - - 0 1",
+            pgn: "1... Rxg3+ 2. Nxg3 Qxg3+ 3. hxg3 Rh1#",
+            previewFEN: "6kR/5p2/8/8/3B4/8/8/6K1 w - - 0 1",
+            detailed: "This mate is usually carried out along the h-file against the castled King. The Rook delivers the checkmate while being protected by another piece. Sacrifices clear the h-file for the finishing blow."
         ),
     ]
 
