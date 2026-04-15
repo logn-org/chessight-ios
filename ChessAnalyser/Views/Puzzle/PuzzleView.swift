@@ -7,6 +7,7 @@ struct PuzzleView: View {
     @State private var hasLoadedOnce = false
     @State private var showHint = false
     @State private var hintMoveUCI: String?
+    @State private var showShareSheet = false
 
     enum PuzzleMode { case today, random }
 
@@ -59,6 +60,12 @@ struct PuzzleView: View {
                         .foregroundStyle(AppColors.textPrimary)
                 }
             }
+        }
+        .sheet(isPresented: $showShareSheet) {
+            SharePositionSheet(
+                fen: viewModel.board.toFEN(),
+                pgn: puzzlePGN
+            )
         }
         .task {
             Analytics.screenViewed("puzzle")
@@ -167,16 +174,25 @@ struct PuzzleView: View {
     // MARK: - Puzzle Subviews
 
     private func puzzleBoardSection(boardSize: CGFloat) -> some View {
-        InteractiveBoardView(
-            board: viewModel.board,
-            selectedSquare: viewModel.selectedSquare,
-            legalMoveTargets: viewModel.legalMoveTargets,
-            lastMove: lastMove,
-            arrows: hintArrows,
-            showCoordinates: appState.engineConfig.showBoardCoordinates,
-            flipped: viewModel.isFlipped,
-            onTapSquare: { viewModel.tapSquare($0) }
-        )
+        ZStack {
+            InteractiveBoardView(
+                board: viewModel.board,
+                selectedSquare: viewModel.selectedSquare,
+                legalMoveTargets: viewModel.legalMoveTargets,
+                lastMove: lastMove,
+                arrows: hintArrows,
+                showCoordinates: appState.engineConfig.showBoardCoordinates,
+                flipped: viewModel.isFlipped,
+                onTapSquare: { viewModel.tapSquare($0) }
+            )
+
+            if viewModel.showPromotionPicker {
+                PromotionPickerView(
+                    color: viewModel.sideToMove,
+                    onSelect: { viewModel.completePromotion(piece: $0) }
+                )
+            }
+        }
         .frame(width: boardSize, height: boardSize)
         .padding(.horizontal, AppSpacing.sm)
         .overlay(
@@ -242,38 +258,66 @@ struct PuzzleView: View {
     }
 
     private var puzzleControlButtons: some View {
-        HStack(spacing: AppSpacing.lg) {
-            Button { viewModel.isFlipped.toggle() } label: {
-                Image(systemName: "arrow.up.arrow.down")
+        HStack(spacing: AppSpacing.sm) {
+            puzzleBlockButton(icon: "arrow.up.arrow.down", label: "Flip") {
+                viewModel.isFlipped.toggle()
             }
 
-            Button { viewModel.resetPuzzle(); showHint = false; hintMoveUCI = nil } label: {
-                Image(systemName: "arrow.counterclockwise")
+            puzzleBlockButton(icon: "arrow.counterclockwise", label: "Reset") {
+                viewModel.resetPuzzle(); showHint = false; hintMoveUCI = nil
             }
 
-            // Hint / show engine move
-            Button { toggleHint() } label: {
-                Image(systemName: showHint ? "lightbulb.fill" : "lightbulb")
-                    .foregroundStyle(showHint ? AppColors.accent : AppColors.textPrimary)
+            puzzleBlockButton(icon: "square.and.arrow.up", label: "Share") {
+                Analytics.shareOpened(source: "puzzle"); showShareSheet = true
+            }
+
+            puzzleBlockButton(
+                icon: showHint ? "lightbulb.fill" : "lightbulb",
+                label: "Hint",
+                highlight: showHint
+            ) {
+                toggleHint()
             }
 
             Button {
+                Analytics.puzzleTryAnother()
                 mode = .random
                 showHint = false
                 hintMoveUCI = nil
                 loadPuzzle()
             } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "shuffle")
-                    Text("Next")
-                        .font(AppFonts.captionBold)
+                VStack(spacing: 4) {
+                    Image(systemName: "arrow.right.circle")
+                        .font(.system(size: 18))
+                    Text("Try Another")
+                        .font(.system(size: 11, weight: .medium))
                 }
-                .foregroundStyle(AppColors.accent)
+                .foregroundStyle(viewModel.puzzleCompleted ? .white : AppColors.textMuted)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, AppSpacing.md)
+                .background(viewModel.puzzleCompleted ? AppColors.accent : AppColors.surface)
+                .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
             }
+            .disabled(!viewModel.puzzleCompleted)
         }
-        .font(.title3)
-        .foregroundStyle(AppColors.textPrimary)
+        .padding(.horizontal, AppSpacing.sm)
         .padding(.vertical, AppSpacing.sm)
+    }
+
+    private func puzzleBlockButton(icon: String, label: String, highlight: Bool = false, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 18))
+                Text(label)
+                    .font(.system(size: 11, weight: .medium))
+            }
+            .foregroundStyle(highlight ? AppColors.accent : AppColors.textPrimary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, AppSpacing.md)
+            .background(highlight ? AppColors.accent.opacity(0.15) : AppColors.surface)
+            .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
+        }
     }
 
     private var puzzleCredit: some View {
@@ -349,6 +393,16 @@ struct PuzzleView: View {
         } else {
             hintMoveUCI = nil
         }
+    }
+
+    private var puzzlePGN: String {
+        guard let puzzle = viewModel.puzzle else { return "" }
+        var pgn = "[FEN \"\(puzzle.fen)\"]\n\n"
+        for move in viewModel.userMoves {
+            if move.isWhite { pgn += "\(move.moveNumber). " }
+            pgn += "\(move.san) "
+        }
+        return pgn.trimmingCharacters(in: .whitespaces)
     }
 
     private var lastMove: (from: String, to: String)? {

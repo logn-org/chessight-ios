@@ -26,6 +26,11 @@ final class PuzzleViewModel {
     private var puzzleAttempts = 0
     private var puzzleMode = "daily"
 
+    // Promotion picker
+    var showPromotionPicker = false
+    var pendingPromotionFrom: Square?
+    var pendingPromotionTo: Square?
+
     var sideToMove: PieceColor { board.sideToMove }
     var isUserTurn: Bool {
         // User plays every other move starting from the first solution move
@@ -81,6 +86,9 @@ final class PuzzleViewModel {
         currentSolutionIndex = 0
         puzzleCompleted = false
         wrongMove = false
+        showPromotionPicker = false
+        pendingPromotionFrom = nil
+        pendingPromotionTo = nil
         userMoves = []
         puzzleStartTime = CFAbsoluteTimeGetCurrent()
         puzzleAttempts = 0
@@ -112,7 +120,7 @@ final class PuzzleViewModel {
     // MARK: - User Interaction
 
     func tapSquare(_ square: Square) {
-        guard isUserTurn && !puzzleCompleted && !wrongMove else { return }
+        guard isUserTurn && !puzzleCompleted && !wrongMove && !showPromotionPicker else { return }
 
         if let selected = selectedSquare {
             if legalMoveTargets.contains(square) {
@@ -141,12 +149,72 @@ final class PuzzleViewModel {
 
     // MARK: - Move Validation
 
+    func completePromotion(piece: PieceType) {
+        guard let from = pendingPromotionFrom, let to = pendingPromotionTo else { return }
+        showPromotionPicker = false
+        pendingPromotionFrom = nil
+        pendingPromotionTo = nil
+
+        let promoChar = piece.symbol.lowercased()
+        let playedUCI = "\(from.algebraic)\(to.algebraic)\(promoChar)"
+
+        guard currentSolutionIndex < solutionMoves.count else { deselect(); return }
+        let expectedUCI = solutionMoves[currentSolutionIndex]
+
+        if playedUCI.lowercased() == expectedUCI.lowercased() {
+            Analytics.puzzlePromotionCorrect(piece: promoChar)
+            executeMove(uci: playedUCI, isUser: true)
+            currentSolutionIndex += 1
+            deselect()
+
+            if currentSolutionIndex >= solutionMoves.count {
+                puzzleCompleted = true
+                SoundManager.shared.playCheckmate()
+                let timeMs = Int((CFAbsoluteTimeGetCurrent() - puzzleStartTime) * 1000)
+                Analytics.puzzleSolved(type: puzzleMode, attempts: puzzleAttempts, usedHint: false, timeMs: timeMs)
+                return
+            }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [self] in
+                playOpponentResponse()
+            }
+        } else {
+            // Wrong promotion piece
+            let expectedPromo = expectedUCI.count == 5 ? String(expectedUCI.last!) : "?"
+            Analytics.puzzlePromotionWrong(expected: expectedPromo, chosen: promoChar)
+            wrongMove = true
+            puzzleAttempts += 1
+            SoundManager.shared.playCheck()
+            deselect()
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [self] in
+                wrongMove = false
+            }
+        }
+    }
+
+    private func isPawnPromotion(from: Square, to: Square) -> Bool {
+        guard let piece = board.piece(at: from), piece.type == .pawn else { return false }
+        return to.rank == 7 || to.rank == 0
+    }
+
     private func tryUserMove(from: Square, to: Square) {
         let playedUCI = "\(from.algebraic)\(to.algebraic)"
 
         // Check if this matches the expected solution move
         guard currentSolutionIndex < solutionMoves.count else { deselect(); return }
         let expectedUCI = solutionMoves[currentSolutionIndex]
+
+        // If this is a promotion move, show the picker
+        if isPawnPromotion(from: from, to: to) && expectedUCI.count == 5
+            && expectedUCI.lowercased().hasPrefix(playedUCI.lowercased()) {
+            pendingPromotionFrom = from
+            pendingPromotionTo = to
+            showPromotionPicker = true
+            Analytics.puzzlePromotionShown()
+            deselect()
+            return
+        }
 
         if playedUCI.lowercased() == expectedUCI.lowercased() {
             // Correct move!

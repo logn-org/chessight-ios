@@ -26,7 +26,7 @@ struct PGNParser {
         let moveText = extractMoveText(trimmed)
         let sanMoves = parseMoveText(moveText)
 
-        let moves = replayMoves(sanMoves)
+        let moves = replayMoves(sanMoves, startingFEN: headers["FEN"])
 
         let id = generateGameId(headers: headers, pgn: trimmed)
 
@@ -141,15 +141,23 @@ struct PGNParser {
         let trimmed = pgn.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return "PGN is empty" }
 
+        let headers = parseHeaders(trimmed)
         let moveText = extractMoveText(trimmed)
         let sanMoves = parseMoveText(moveText)
 
         guard !sanMoves.isEmpty else { return "No moves found in PGN" }
 
-        var board = ChessBoard()
+        var board: ChessBoard
+        if let fen = headers["FEN"], !fen.isEmpty {
+            board = ChessBoard(fen: fen)
+        } else {
+            board = ChessBoard()
+        }
+        let startsAsBlack = board.sideToMove == .black
         for (index, san) in sanMoves.enumerated() {
-            let moveNumber = (index / 2) + 1
-            let side = index % 2 == 0 ? "White" : "Black"
+            let isWhite = startsAsBlack ? (index % 2 != 0) : (index % 2 == 0)
+            let moveNumber = startsAsBlack ? ((index + 1) / 2) + 1 : (index / 2) + 1
+            let side = isWhite ? "White" : "Black"
             guard board.makeMoveSAN(san) != nil else {
                 return "Invalid move at \(moveNumber). \(side): \(san) — position: \(board.toFEN())"
             }
@@ -159,14 +167,20 @@ struct PGNParser {
 
     // MARK: - Replay Moves to Generate Full Game Data
 
-    static func replayMoves(_ sanMoves: [String]) -> [GameMove] {
-        var board = ChessBoard()
+    static func replayMoves(_ sanMoves: [String], startingFEN: String? = nil) -> [GameMove] {
+        var board: ChessBoard
+        if let fen = startingFEN, !fen.isEmpty {
+            board = ChessBoard(fen: fen)
+        } else {
+            board = ChessBoard()
+        }
+        let startsAsBlack = board.sideToMove == .black
         var moves: [GameMove] = []
 
         for (index, san) in sanMoves.enumerated() {
             let fenBefore = board.toFEN()
-            let isWhite = index % 2 == 0
-            let moveNumber = (index / 2) + 1
+            let isWhite = startsAsBlack ? (index % 2 != 0) : (index % 2 == 0)
+            let moveNumber = startsAsBlack ? ((index + 1) / 2) + 1 : (index / 2) + 1
 
             guard let moveResult = board.makeMoveSAN(san) else {
                 CrashLogger.logEngine("PGN validation: invalid move '\(san)' at move \(moveNumber) (\(isWhite ? "White" : "Black")), skipping remaining moves")

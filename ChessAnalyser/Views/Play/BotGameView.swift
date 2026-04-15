@@ -13,6 +13,7 @@ struct BotGameView: View {
     /// All FENs for this practice pattern (for the Random button)
     var practiceFENs: [String] = []
     @State private var currentPracticeFEN: String? = nil
+    @State private var showShareSheet = false
 
     var body: some View {
         if showSetup && !autoStart {
@@ -191,6 +192,22 @@ struct BotGameView: View {
         .navigationTitle(studyTitle ?? "vs Stockfish")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .sheet(isPresented: $showShareSheet) {
+            SharePositionSheet(
+                fen: viewModel.board.toFEN(),
+                pgn: botGamePGN
+            )
+        }
+    }
+
+    private var botGamePGN: String {
+        let startFEN = customFEN ?? currentPracticeFEN ?? "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        var pgn = "[FEN \"\(startFEN)\"]\n\n"
+        for move in viewModel.moveHistory {
+            if move.isWhite { pgn += "\(move.moveNumber). " }
+            pgn += "\(move.san) "
+        }
+        return pgn.trimmingCharacters(in: .whitespaces)
     }
 
     // MARK: - Bot Game Subviews
@@ -344,82 +361,84 @@ struct BotGameView: View {
     }
 
     private var botGameControls: some View {
-        HStack(spacing: AppSpacing.lg) {
-            // Flip
-            Button { viewModel.isFlipped.toggle() } label: {
-                Image(systemName: "arrow.up.arrow.down").font(.body)
-            }
-
-            // Undo
-            Button { viewModel.undoLastTwoMoves() } label: {
-                Image(systemName: "arrow.uturn.backward").font(.body)
-            }
-            .disabled(viewModel.moveHistory.count < 2 || viewModel.isBotThinking)
-
-            // Hints toggle
-            Button { viewModel.toggleHints() } label: {
-                Image(systemName: viewModel.showHints ? "lightbulb.fill" : "lightbulb")
-                    .font(.body)
-                    .foregroundStyle(viewModel.showHints ? AppColors.accent : AppColors.textPrimary)
-            }
-
-            // Depth adjuster
-            HStack(spacing: 4) {
-                Button { if viewModel.botDepth > 1 { viewModel.botDepth -= 1 } } label: {
-                    Image(systemName: "minus.circle").font(.body)
+        VStack(spacing: AppSpacing.sm) {
+            HStack(spacing: AppSpacing.sm) {
+                botBlockButton(icon: "arrow.up.arrow.down", label: "Flip") {
+                    viewModel.isFlipped.toggle()
                 }
-                Text("D\(viewModel.botDepth)")
-                    .font(AppFonts.captionBold)
-                    .foregroundStyle(AppColors.textSecondary)
-                    .frame(width: 30)
-                Button { if viewModel.botDepth < 20 { viewModel.botDepth += 1 } } label: {
-                    Image(systemName: "plus.circle").font(.body)
-                }
-            }
 
-            // Practice mode: Reset + Random buttons
-            if autoStart {
-                Button { resetPractice() } label: {
-                    Image(systemName: "arrow.counterclockwise")
-                        .font(.body)
-                        .foregroundStyle(AppColors.textPrimary)
+                botBlockButton(icon: "arrow.uturn.backward", label: "Undo") {
+                    viewModel.undoLastTwoMoves()
                 }
-                if !practiceFENs.isEmpty {
-                    Button { randomPractice() } label: {
-                        Image(systemName: "shuffle")
-                            .font(.body)
-                            .foregroundStyle(AppColors.accent)
-                    }
+                .opacity(viewModel.moveHistory.count < 2 || viewModel.isBotThinking ? 0.4 : 1)
+                .disabled(viewModel.moveHistory.count < 2 || viewModel.isBotThinking)
+
+                botBlockButton(
+                    icon: viewModel.showHints ? "lightbulb.fill" : "lightbulb",
+                    label: "Hints",
+                    highlight: viewModel.showHints
+                ) {
+                    viewModel.toggleHints()
+                }
+
+                botBlockButton(icon: "minus.circle", label: "D\(viewModel.botDepth)") {
+                    if viewModel.botDepth > 1 { viewModel.botDepth -= 1 }
+                }
+
+                botBlockButton(icon: "plus.circle", label: "D\(viewModel.botDepth)") {
+                    if viewModel.botDepth < 20 { viewModel.botDepth += 1 }
+                }
+
+                botBlockButton(icon: "square.and.arrow.up", label: "Share") {
+                    Analytics.shareOpened(source: "bot_game"); showShareSheet = true
                 }
             }
 
-            // Resign / New game
-            if viewModel.gameOver {
-                Button {
-                    if autoStart {
+            HStack(spacing: AppSpacing.sm) {
+                if autoStart {
+                    botBlockButton(icon: "arrow.counterclockwise", label: "Reset") {
                         resetPractice()
-                    } else {
-                        showSetup = true
                     }
-                } label: {
-                    Text(autoStart ? "Try Again" : "New Game")
-                        .font(AppFonts.captionBold)
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, AppSpacing.sm)
-                        .padding(.vertical, AppSpacing.xs)
-                        .background(AppColors.accent)
-                        .clipShape(Capsule())
+                    if !practiceFENs.isEmpty {
+                        botBlockButton(icon: "shuffle", label: "Random", highlight: true) {
+                            randomPractice()
+                        }
+                    }
                 }
-            } else if !autoStart {
-                Button { viewModel.resign() } label: {
-                    Image(systemName: "flag.fill")
-                        .font(.body)
-                        .foregroundStyle(AppColors.blunder)
+
+                if viewModel.gameOver {
+                    botBlockButton(
+                        icon: "arrow.counterclockwise",
+                        label: autoStart ? "Try Again" : "New Game",
+                        highlight: true
+                    ) {
+                        if autoStart { resetPractice() } else { showSetup = true }
+                    }
+                } else if !autoStart {
+                    botBlockButton(icon: "flag.fill", label: "Resign", isDestructive: true) {
+                        viewModel.resign()
+                    }
                 }
             }
         }
-        .foregroundStyle(AppColors.textPrimary)
+        .padding(.horizontal, AppSpacing.sm)
         .padding(.vertical, AppSpacing.sm)
+    }
+
+    private func botBlockButton(icon: String, label: String, highlight: Bool = false, isDestructive: Bool = false, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 16))
+                Text(label)
+                    .font(.system(size: 10, weight: .medium))
+            }
+            .foregroundStyle(isDestructive ? AppColors.blunder : highlight ? AppColors.accent : AppColors.textPrimary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, AppSpacing.sm)
+            .background(highlight ? AppColors.accent.opacity(0.15) : AppColors.surface)
+            .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
+        }
     }
 
     private var botGameMoveHistory: some View {

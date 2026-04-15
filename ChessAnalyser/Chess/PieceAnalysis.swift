@@ -354,9 +354,13 @@ struct PieceAnalysis {
     ) -> [BoardArrow] {
         var arrows: [BoardArrow] = []
 
-        // Best move arrow (blue)
+        // Best move arrow (blue) — shows the best NEXT move for whoever's turn it is
         if showBestMove, let analysis = analysis {
-            if let parsed = UCIParser.parseUCIMove(analysis.bestMove),
+            // Forward-looking: use PV from the after-position (current board)
+            let nextBestUCI = analysis.evalAfter.pv.first
+                ?? analysis.engineLines.first?.uciMoves.first
+            if let uci = nextBestUCI,
+               let parsed = UCIParser.parseUCIMove(uci),
                let from = Square(algebraic: parsed.from),
                let to = Square(algebraic: parsed.to) {
                 arrows.append(BoardArrow(from: from, to: to, type: .bestMove))

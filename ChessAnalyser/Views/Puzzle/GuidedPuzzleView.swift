@@ -10,6 +10,7 @@ struct GuidedPuzzleView: View {
     @State private var puzzleStartTime = CFAbsoluteTimeGetCurrent()
     @State private var wrongAttempts = 0
     @State private var usedHintInSession = false
+    @State private var showShareSheet = false
 
     enum Mode { case learn, practice }
 
@@ -213,6 +214,13 @@ struct GuidedPuzzleView: View {
                     onTapSquare: { viewModel.tapSquare($0) }
                 )
 
+                if viewModel.showPromotionPicker {
+                    PromotionPickerView(
+                        color: viewModel.sideToMove,
+                        onSelect: { viewModel.completePromotion(piece: $0) }
+                    )
+                }
+
                 if viewModel.puzzleCompleted {
                     completionOverlay
                 }
@@ -248,6 +256,10 @@ struct GuidedPuzzleView: View {
                         showHint = false
                         hintMoveUCI = nil
                     }
+
+                    actionButton(icon: "square.and.arrow.up", label: "Share", color: AppColors.surface) {
+                        Analytics.shareOpened(source: "guided_puzzle"); showShareSheet = true
+                    }
                 }
             }
             .padding(.horizontal, AppSpacing.md)
@@ -255,6 +267,22 @@ struct GuidedPuzzleView: View {
 
             Spacer()
         }
+        .sheet(isPresented: $showShareSheet) {
+            SharePositionSheet(
+                fen: viewModel.board.toFEN(),
+                pgn: guidedPuzzlePGN
+            )
+        }
+    }
+
+    private var guidedPuzzlePGN: String {
+        let currentPuzzle = currentPuzzleIndex < allPuzzles.count ? allPuzzles[currentPuzzleIndex] : puzzle
+        var pgn = "[FEN \"\(currentPuzzle.fen)\"]\n\n"
+        for move in viewModel.userMoves {
+            if move.isWhite { pgn += "\(move.moveNumber). " }
+            pgn += "\(move.san) "
+        }
+        return pgn.trimmingCharacters(in: .whitespaces)
     }
 
     // MARK: - Action Button

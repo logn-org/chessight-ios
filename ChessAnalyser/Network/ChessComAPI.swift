@@ -1,6 +1,8 @@
 import Foundation
 
 actor ChessComAPI {
+    static let shared = ChessComAPI()
+
     private let baseURL = "https://api.chess.com/pub"
     private let session: URLSession
 

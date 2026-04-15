@@ -112,7 +112,12 @@ final class GameState {
             return
         }
 
-        var board = ChessBoard()
+        var board: ChessBoard
+        if let fen = game.headers["FEN"], !fen.isEmpty {
+            board = ChessBoard(fen: fen)
+        } else {
+            board = ChessBoard()
+        }
         boards = [board]
 
         for move in game.moves {

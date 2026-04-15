@@ -2,7 +2,7 @@ import Foundation
 
 @Observable
 final class GameListViewModel {
-    private let api = ChessComAPI()
+    private let api = ChessComAPI.shared
 
     var games: [ChessComGame] = []
     var isLoading = false

@@ -2,7 +2,7 @@ import Foundation
 
 @Observable
 final class ProfileViewModel {
-    private let api = ChessComAPI()
+    private let api = ChessComAPI.shared
 
     var isLoading = false
     var error: String?

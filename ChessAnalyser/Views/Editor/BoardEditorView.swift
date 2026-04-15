@@ -10,6 +10,7 @@ struct BoardEditorView: View {
     @State private var showRules = false
     @State private var showFENInput = false
     @State private var fenInput = ""
+    @State private var showShareSheet = false
 
     var body: some View {
         GeometryReader { geometry in
@@ -79,6 +80,12 @@ struct BoardEditorView: View {
         .navigationTitle("Board Editor")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .sheet(isPresented: $showShareSheet) {
+            SharePositionSheet(
+                fen: viewModel.currentFEN,
+                pgn: "[FEN \"\(viewModel.currentFEN)\"]"
+            )
+        }
         .navigationDestination(isPresented: $navigateToFreePlay) {
             AnalysisViewForFEN(fen: fenToPlay, initialFlip: viewModel.isFlipped)
         }
@@ -184,66 +191,70 @@ struct BoardEditorView: View {
     }
 
     private var editorActionButtons: some View {
-        HStack(spacing: AppSpacing.sm) {
-            Button { viewModel.toggleSideToMove() } label: {
-                HStack(spacing: 4) {
-                    Circle()
-                        .fill(viewModel.sideToMove == .white ? Color.white : Color.black)
-                        .frame(width: 14, height: 14)
-                        .overlay(Circle().stroke(AppColors.surfaceLight, lineWidth: 1))
-                    Text("\(viewModel.sideToMove == .white ? "White" : "Black") to move")
-                        .font(AppFonts.captionBold)
+        VStack(spacing: AppSpacing.sm) {
+            HStack(spacing: AppSpacing.sm) {
+                Button { viewModel.toggleSideToMove() } label: {
+                    VStack(spacing: 4) {
+                        Circle()
+                            .fill(viewModel.sideToMove == .white ? Color.white : Color.black)
+                            .frame(width: 18, height: 18)
+                            .overlay(Circle().stroke(AppColors.surfaceLight, lineWidth: 1))
+                        Text(viewModel.sideToMove == .white ? "White" : "Black")
+                            .font(.system(size: 10, weight: .medium))
+                    }
+                    .foregroundStyle(AppColors.textPrimary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, AppSpacing.sm)
+                    .background(AppColors.surface)
+                    .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
                 }
-                .padding(.horizontal, AppSpacing.sm)
-                .padding(.vertical, AppSpacing.sm)
-                .background(AppColors.surface)
-                .clipShape(Capsule())
+
+                editorBlockButton(icon: "arrow.uturn.backward", label: "Undo") {
+                    viewModel.undo()
+                }
+                .opacity(viewModel.canUndo ? 1 : 0.4)
+                .disabled(!viewModel.canUndo)
+
+                editorBlockButton(icon: "arrow.up.arrow.down", label: "Flip") {
+                    viewModel.isFlipped.toggle()
+                }
             }
 
-            Button { viewModel.undo() } label: {
-                Image(systemName: "arrow.uturn.backward")
-                    .padding(.horizontal, AppSpacing.sm)
-                    .padding(.vertical, AppSpacing.sm)
-                    .background(AppColors.surface)
-                    .clipShape(Capsule())
-            }
-            .disabled(!viewModel.canUndo)
-            .opacity(viewModel.canUndo ? 1 : 0.4)
+            HStack(spacing: AppSpacing.sm) {
+                editorBlockButton(icon: "trash", label: "Clear") {
+                    viewModel.clearBoard()
+                }
 
-            Button { viewModel.isFlipped.toggle() } label: {
-                Image(systemName: "arrow.up.arrow.down")
-                    .padding(.horizontal, AppSpacing.sm)
-                    .padding(.vertical, AppSpacing.sm)
-                    .background(AppColors.surface)
-                    .clipShape(Capsule())
-            }
+                editorBlockButton(icon: "arrow.counterclockwise", label: "Reset") {
+                    viewModel.resetToDefault()
+                }
 
-            Button { viewModel.clearBoard() } label: {
-                Image(systemName: "trash")
-                    .padding(.horizontal, AppSpacing.sm)
-                    .padding(.vertical, AppSpacing.sm)
-                    .background(AppColors.surface)
-                    .clipShape(Capsule())
-            }
+                editorBlockButton(icon: "shuffle", label: "960") {
+                    viewModel.shuffleChess960()
+                }
 
-            Button { viewModel.resetToDefault() } label: {
-                Image(systemName: "arrow.counterclockwise")
-                    .padding(.horizontal, AppSpacing.sm)
-                    .padding(.vertical, AppSpacing.sm)
-                    .background(AppColors.surface)
-                    .clipShape(Capsule())
-            }
-
-            Button { viewModel.shuffleChess960() } label: {
-                Image(systemName: "shuffle")
-                    .padding(.horizontal, AppSpacing.sm)
-                    .padding(.vertical, AppSpacing.sm)
-                    .background(AppColors.surface)
-                    .clipShape(Capsule())
+                editorBlockButton(icon: "square.and.arrow.up", label: "Share") {
+                    Analytics.shareOpened(source: "board_editor"); showShareSheet = true
+                }
             }
         }
-        .font(AppFonts.captionBold)
-        .foregroundStyle(AppColors.textPrimary)
+        .padding(.horizontal, AppSpacing.sm)
+    }
+
+    private func editorBlockButton(icon: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 16))
+                Text(label)
+                    .font(.system(size: 10, weight: .medium))
+            }
+            .foregroundStyle(AppColors.textPrimary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, AppSpacing.sm)
+            .background(AppColors.surface)
+            .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
+        }
     }
 
     private var editorFENBar: some View {

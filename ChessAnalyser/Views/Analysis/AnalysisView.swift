@@ -4,10 +4,9 @@ struct AnalysisView: View {
     @Environment(AppState.self) private var appState
     @State private var viewModel = AnalysisViewModel()
     @State private var showEngineDetail = false
-    @State private var showPlayerInfo = false
+    @State private var playerInfoItem: PlayerInfoItem?
     @State private var showEngineHints = false
-    @State private var playerInfoUsername = ""
-    @State private var playerInfoRating: Int?
+    @State private var showShareSheet = false
     @State private var loggedIPadLayout = false
 
     let pgn: String?
@@ -34,6 +33,32 @@ struct AnalysisView: View {
     }
 
     var isFENMode: Bool { fen != nil }
+
+    private func isGenericName(_ name: String) -> Bool {
+        let generic = ["white", "black", "?", ""]
+        return generic.contains(name.lowercased())
+    }
+
+    private var shareablePGN: String {
+        // If loaded from PGN, use original
+        if let game = viewModel.gameState.game {
+            return game.pgn
+        }
+        // Build PGN from exploration/FEN moves
+        return buildPGN(
+            startFEN: fen ?? "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+            moves: viewModel.isExploring ? viewModel.explorationMoves : []
+        )
+    }
+
+    private func buildPGN(startFEN: String, moves: [GameMove]) -> String {
+        var pgn = "[FEN \"\(startFEN)\"]\n\n"
+        for move in moves {
+            if move.isWhite { pgn += "\(move.moveNumber). " }
+            pgn += "\(move.san) "
+        }
+        return pgn.trimmingCharacters(in: .whitespaces)
+    }
 
     var body: some View {
         GeometryReader { geometry in
@@ -71,8 +96,14 @@ struct AnalysisView: View {
         .sheet(isPresented: $showEngineDetail) {
             engineDetailSheet
         }
-        .sheet(isPresented: $showPlayerInfo) {
-            PlayerInfoSheet(username: playerInfoUsername, rating: playerInfoRating)
+        .sheet(item: $playerInfoItem) { item in
+            PlayerInfoSheet(username: item.username, rating: item.rating)
+        }
+        .sheet(isPresented: $showShareSheet) {
+            SharePositionSheet(
+                fen: viewModel.displayBoard.toFEN(),
+                pgn: shareablePGN
+            )
         }
     }
 
@@ -284,7 +315,8 @@ struct AnalysisView: View {
                 onGoToEnd: { viewModel.goToEnd() },
                 onToggleAutoPlay: { viewModel.toggleAutoPlay() },
                 onFlipBoard: { viewModel.flipBoard() },
-                onReEvaluate: { viewModel.reEvaluate(config: appState.engineConfig) }
+                onReEvaluate: { viewModel.reEvaluate(config: appState.engineConfig) },
+                onShare: { Analytics.shareOpened(source: "analysis"); showShareSheet = true }
             )
             .padding(.vertical, 2)
 
@@ -421,7 +453,8 @@ struct AnalysisView: View {
                     onGoToEnd: { viewModel.goToEnd() },
                     onToggleAutoPlay: { viewModel.toggleAutoPlay() },
                     onFlipBoard: { viewModel.flipBoard() },
-                    onReEvaluate: { viewModel.reEvaluate(config: appState.engineConfig) }
+                    onReEvaluate: { viewModel.reEvaluate(config: appState.engineConfig) },
+                    onShare: { Analytics.shareOpened(source: "analysis"); showShareSheet = true }
                 )
                 .padding(.vertical, AppSpacing.xs)
 
@@ -708,14 +741,16 @@ struct AnalysisView: View {
                     .frame(width: 12, height: 12)
                     .overlay(Circle().stroke(AppColors.surfaceLight, lineWidth: 1))
 
-                Button {
-                    playerInfoUsername = rawUsername
-                    playerInfoRating = rating
-                    showPlayerInfo = true
-                } label: {
+                if studyMode || isFENMode || isGenericName(rawUsername) {
                     Text(name).font(AppFonts.bodyBold).foregroundStyle(AppColors.textPrimary).lineLimit(1)
+                } else {
+                    Button {
+                        playerInfoItem = PlayerInfoItem(username: rawUsername, rating: rating)
+                    } label: {
+                        Text(name).font(AppFonts.bodyBold).foregroundStyle(AppColors.textPrimary).lineLimit(1)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
 
                 Spacer()
                 if let accuracy = accuracy {

@@ -4,7 +4,7 @@ import SwiftUI
 final class AnalysisViewModel {
     let gameState = GameState()
     let analysisEngine = AnalysisEngine()
-    private let api = ChessComAPI()
+    private let api = ChessComAPI.shared
 
     var whiteUsername: String?
     var blackUsername: String?
@@ -484,8 +484,16 @@ final class AnalysisViewModel {
         deselect()
         Analytics.variationExplored(moveCount: 0, fromGame: gameState.game?.moves.isEmpty == false)
 
-        // Run fresh analysis for the current position
-        analyzeExplorationPosition()
+        // Use cached main-game analysis as the "before" result for classifying the first variation move
+        if let cachedAnalysis = analysisEngine.getAnalysis(forMoveIndex: savedMoveIndex) {
+            // The evalAfter of the current move = eval of the branch point position
+            explorationAfterResult = PositionAnalysis(
+                eval: cachedAnalysis.evalAfter,
+                bestMove: cachedAnalysis.evalAfter.pv.first ?? "",
+                lines: cachedAnalysis.engineLines
+            )
+        }
+        // Don't start a separate analysis here — the variation move that follows will trigger its own
     }
 
     func exitExploration() {
@@ -763,6 +771,21 @@ final class AnalysisViewModel {
     var currentMoveAnalysis: MoveAnalysis? {
         guard !isExploring, gameState.currentMoveIndex >= 0 else { return nil }
         return analysisEngine.getAnalysis(forMoveIndex: gameState.currentMoveIndex)
+    }
+
+    /// Best next move UCI for the current board position (forward-looking)
+    var nextBestMoveUCI: String? {
+        if isExploring {
+            return explorationBestMove
+        }
+        guard let analysis = currentMoveAnalysis else { return nil }
+        return analysis.evalAfter.pv.first ?? analysis.engineLines.first?.uciMoves.first
+    }
+
+    /// Best next move in SAN for display
+    var nextBestMoveSAN: String? {
+        guard let uci = nextBestMoveUCI, !uci.isEmpty else { return nil }
+        return displayBoard.uciToSAN(uci)
     }
 
     var nextGameMove: GameMove? {

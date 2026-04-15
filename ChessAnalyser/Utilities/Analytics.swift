@@ -240,6 +240,64 @@ enum Analytics {
         log("chess960_generated")
     }
 
+    // MARK: - Share
+
+    static func shareOpened(source: String) {
+        log("share_opened", params: ["source": source])
+    }
+
+    static func shareCopied(contentType: String, source: String) {
+        log("share_copied", params: ["content_type": contentType, "source": source])
+    }
+
+    // MARK: - Profile Info
+
+    static func profileInfoViewed(username: String) {
+        log("profile_info_viewed", params: ["username": username])
+    }
+
+    static func profileInfoSaved(username: String) {
+        log("profile_info_saved", params: ["username": username])
+    }
+
+    static func profileInfoFailed(username: String) {
+        log("profile_info_failed", params: ["username": username])
+    }
+
+    // MARK: - Puzzle Promotion
+
+    static func puzzlePromotionShown() {
+        log("puzzle_promotion_shown")
+    }
+
+    static func puzzlePromotionCorrect(piece: String) {
+        log("puzzle_promotion_correct", params: ["piece": piece])
+    }
+
+    static func puzzlePromotionWrong(expected: String, chosen: String) {
+        log("puzzle_promotion_wrong", params: ["expected": expected, "chosen": chosen])
+    }
+
+    // MARK: - Puzzle Navigation
+
+    static func puzzleTryAnother() {
+        log("puzzle_try_another")
+    }
+
+    static func puzzleHintUsed(type: String) {
+        log("puzzle_hint_used", params: ["puzzle_type": type])
+    }
+
+    static func puzzleReset(type: String) {
+        log("puzzle_reset", params: ["puzzle_type": type])
+    }
+
+    // MARK: - FEN Import
+
+    static func fenImported(source: String, valid: Bool) {
+        log("fen_imported", params: ["source": source, "valid": valid])
+    }
+
     // MARK: - Device & Platform
 
     static func appLaunched(isIPad: Bool, appVersion: String) {
