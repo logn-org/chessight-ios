@@ -3,8 +3,8 @@
   "nonRenewingSubscriptions" : [],
   "products" : [
     {
-      "displayPrice" : "6.99",
-      "familyShareable" : false,
+      "displayPrice" : "4.99",
+      "familyShareable" : true,
       "internalID" : "PREMIUM_LIFETIME_001",
       "localizations" : [
         {
