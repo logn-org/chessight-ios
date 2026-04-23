@@ -1,10 +1,16 @@
 import SwiftUI
 
+@MainActor
 @Observable
 final class AppState {
     var profileStore = ProfileStore()
     var engineConfig = EngineConfiguration()
-    var analysisCache = AnalysisCache()
+    var analysisCache = AnalysisCache.shared
+
+    // Monetization
+    var premium = PremiumManager()
+    var ads = AdManager()
+    var analysisQuota = AnalysisQuotaManager()
 
     // Navigation state
     var selectedTab: AppTab = .home

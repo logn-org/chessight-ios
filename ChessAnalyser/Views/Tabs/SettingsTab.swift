@@ -8,6 +8,8 @@ struct SettingsTab: View {
 
         NavigationStack {
             List {
+                premiumSection
+
                 Section("Engine") {
                     Picker("Analysis Depth", selection: $config.depthPreset) {
                         ForEach(AnalysisDepthPreset.allCases) { preset in
@@ -232,6 +234,69 @@ struct SettingsTab: View {
             .toolbarColorScheme(.dark, for: .navigationBar)
             .onAppear {
                 Analytics.screenViewed("settings")
+            }
+        }
+    }
+
+    // MARK: - Premium
+
+    @ViewBuilder
+    private var premiumSection: some View {
+        if appState.premium.isPremium {
+            Section("Premium") {
+                HStack(spacing: AppSpacing.sm) {
+                    Image(systemName: "crown.fill")
+                        .foregroundStyle(AppColors.accent)
+                    Text("Premium")
+                        .foregroundStyle(AppColors.textPrimary)
+                    Spacer()
+                    Text("Active")
+                        .font(AppFonts.captionBold)
+                        .foregroundStyle(AppColors.best)
+                }
+                .listRowBackground(AppColors.surface)
+            }
+        } else {
+            Section {
+                Button {
+                    Task { _ = await appState.premium.purchase() }
+                } label: {
+                    HStack(spacing: AppSpacing.sm) {
+                        Image(systemName: "crown.fill")
+                            .foregroundStyle(AppColors.accent)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Upgrade to Premium")
+                                .font(AppFonts.bodyBold)
+                                .foregroundStyle(AppColors.textPrimary)
+                            Text("Unlimited analyses · No ads")
+                                .font(AppFonts.small)
+                                .foregroundStyle(AppColors.textMuted)
+                        }
+                        Spacer()
+                        if appState.premium.isPurchasing {
+                            ProgressView().tint(AppColors.accent)
+                        } else if !appState.premium.displayPrice.isEmpty {
+                            Text(appState.premium.displayPrice)
+                                .font(AppFonts.captionBold)
+                                .foregroundStyle(AppColors.accent)
+                        }
+                    }
+                }
+                .disabled(appState.premium.isPurchasing)
+                .listRowBackground(AppColors.surface)
+
+                Button {
+                    Task { await appState.premium.restore() }
+                } label: {
+                    HStack {
+                        Text("Restore Purchases")
+                            .foregroundStyle(AppColors.textPrimary)
+                        Spacer()
+                        Image(systemName: "arrow.clockwise")
+                            .foregroundStyle(AppColors.textMuted)
+                    }
+                }
+                .listRowBackground(AppColors.surface)
             }
         }
     }

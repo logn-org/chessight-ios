@@ -1,0 +1,35 @@
+{
+  "identifier" : "Chessight.Products",
+  "nonRenewingSubscriptions" : [],
+  "products" : [
+    {
+      "displayPrice" : "6.99",
+      "familyShareable" : false,
+      "internalID" : "PREMIUM_LIFETIME_001",
+      "localizations" : [
+        {
+          "description" : "Unlimited analyses, no ads. One-time purchase.",
+          "displayName" : "Chessight Premium",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.logncomplexity.chessight.premium_lifetime",
+      "referenceName" : "Premium Lifetime",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "",
+    "_developerTeamID" : "",
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 0,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : []
+  },
+  "subscriptionGroups" : [],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

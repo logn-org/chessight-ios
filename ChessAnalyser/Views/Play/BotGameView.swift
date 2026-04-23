@@ -381,13 +381,7 @@ struct BotGameView: View {
                     viewModel.toggleHints()
                 }
 
-                botBlockButton(icon: "minus.circle", label: "D\(viewModel.botDepth)") {
-                    if viewModel.botDepth > 1 { viewModel.botDepth -= 1 }
-                }
-
-                botBlockButton(icon: "plus.circle", label: "D\(viewModel.botDepth)") {
-                    if viewModel.botDepth < 20 { viewModel.botDepth += 1 }
-                }
+                botDepthStepper
 
                 botBlockButton(icon: "square.and.arrow.up", label: "Share") {
                     Analytics.shareOpened(source: "bot_game"); showShareSheet = true
@@ -423,6 +417,49 @@ struct BotGameView: View {
         }
         .padding(.horizontal, AppSpacing.sm)
         .padding(.vertical, AppSpacing.sm)
+    }
+
+    /// Single-cell depth stepper: tap the left half to decrease, right half to increase.
+    /// Replaces two separate -/+ buttons that were easy to mis-tap.
+    private var botDepthStepper: some View {
+        HStack(spacing: 0) {
+            Button {
+                if viewModel.botDepth > 1 { viewModel.botDepth -= 1 }
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(viewModel.botDepth > 1 ? AppColors.textPrimary : AppColors.textMuted.opacity(0.3))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(viewModel.botDepth <= 1)
+
+            VStack(spacing: 4) {
+                Text("D\(viewModel.botDepth)")
+                    .font(.system(size: 14, weight: .bold))
+                Text("Depth")
+                    .font(.system(size: 10, weight: .medium))
+            }
+            .foregroundStyle(AppColors.textPrimary)
+            .allowsHitTesting(false)
+
+            Button {
+                if viewModel.botDepth < 20 { viewModel.botDepth += 1 }
+            } label: {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(viewModel.botDepth < 20 ? AppColors.textPrimary : AppColors.textMuted.opacity(0.3))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(viewModel.botDepth >= 20)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, AppSpacing.sm)
+        .background(AppColors.surface)
+        .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
     }
 
     private func botBlockButton(icon: String, label: String, highlight: Bool = false, isDestructive: Bool = false, action: @escaping () -> Void) -> some View {

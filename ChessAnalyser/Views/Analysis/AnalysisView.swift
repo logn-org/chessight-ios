@@ -8,6 +8,8 @@ struct AnalysisView: View {
     @State private var showEngineHints = false
     @State private var showShareSheet = false
     @State private var loggedIPadLayout = false
+    @State private var showPaywall = false
+    @State private var accessResolved = false
 
     let pgn: String?
     let fen: String?
@@ -84,12 +86,59 @@ struct AnalysisView: View {
                     .font(AppFonts.bodyBold)
                     .foregroundStyle(AppColors.textPrimary)
             }
+            ToolbarItem(placement: .topBarTrailing) {
+                HStack(spacing: AppSpacing.md) {
+                    Button { viewModel.flipBoard() } label: {
+                        Image(systemName: "arrow.up.arrow.down")
+                            .foregroundStyle(AppColors.accent)
+                    }
+                    if hasLoadedGame && !viewModel.isViewerOnlyMode {
+                        Button { viewModel.reEvaluate(config: appState.engineConfig) } label: {
+                            if viewModel.analysisEngine.progress.isAnalyzing {
+                                ProgressView().tint(AppColors.accent)
+                            } else {
+                                Image(systemName: "sparkle.magnifyingglass")
+                                    .foregroundStyle(AppColors.accent)
+                            }
+                        }
+                        .disabled(viewModel.analysisEngine.progress.isAnalyzing)
+                    }
+                    Button {
+                        Analytics.shareOpened(source: "analysis")
+                        showShareSheet = true
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                            .foregroundStyle(AppColors.accent)
+                    }
+                }
+            }
         }
         .onAppear {
             Analytics.screenViewed("analysis")
             loadGame()
         }
         .onDisappear { viewModel.cleanup() }
+        .sheet(isPresented: $showPaywall) {
+            AnalysisPaywallView(
+                onPremium: {
+                    if let gameId = viewModel.gameState.game?.id {
+                        AnalysisCache.shared.markPending(gameId)
+                    }
+                    runAnalysis()
+                },
+                onWatchAd: {
+                    // Reward consumed — mark pending so if analysis is interrupted,
+                    // the user can resume without watching another ad.
+                    if let gameId = viewModel.gameState.game?.id {
+                        AnalysisCache.shared.markPending(gameId)
+                    }
+                    runAnalysis()
+                },
+                onViewFree: { viewModel.isViewerOnlyMode = true }
+            )
+            .presentationDetents([.medium])
+            .presentationDragIndicator(.hidden)
+        }
         .onChange(of: viewModel.gameState.currentMoveIndex) { _, _ in
             viewModel.onMoveChanged()
         }
@@ -111,7 +160,7 @@ struct AnalysisView: View {
 
     private func iPhoneLayout(geometry: GeometryProxy) -> some View {
         let screenWidth = geometry.size.width
-        let showEvalBar = !isFENMode || showEngineHints
+        let showEvalBar = !viewModel.isViewerOnlyMode && (!isFENMode || showEngineHints)
         let boardSize = max(1, showEvalBar
             ? screenWidth - AppSpacing.evalBarWidth - AppSpacing.sm * 2 - AppSpacing.xs
             : screenWidth - AppSpacing.sm * 2)
@@ -126,15 +175,15 @@ struct AnalysisView: View {
             playerHeader(
                 name: topIsWhite ? viewModel.displayWhiteName : viewModel.displayBlackName,
                 isWhite: topIsWhite,
-                accuracy: topIsWhite
+                accuracy: viewModel.isViewerOnlyMode ? nil : (topIsWhite
                     ? viewModel.analysisEngine.gameAnalysis?.whiteAccuracy
-                    : viewModel.analysisEngine.gameAnalysis?.blackAccuracy
+                    : viewModel.analysisEngine.gameAnalysis?.blackAccuracy)
             )
 
             // 2. Board + eval bar (FIXED size, always interactive)
             HStack(spacing: 0) {
                 if showEvalBar {
-                    EvalBarView(eval: viewModel.currentEval, sideToMoveIsWhite: evalSideIsWhite)
+                    EvalBarView(eval: viewModel.currentEval, sideToMoveIsWhite: evalSideIsWhite, isPending: viewModel.isExplorationAnalyzing)
                         .frame(height: boardSize)
                 }
 
@@ -178,9 +227,9 @@ struct AnalysisView: View {
             playerHeader(
                 name: bottomIsWhite ? viewModel.displayWhiteName : viewModel.displayBlackName,
                 isWhite: bottomIsWhite,
-                accuracy: bottomIsWhite
+                accuracy: viewModel.isViewerOnlyMode ? nil : (bottomIsWhite
                     ? viewModel.analysisEngine.gameAnalysis?.whiteAccuracy
-                    : viewModel.analysisEngine.gameAnalysis?.blackAccuracy
+                    : viewModel.analysisEngine.gameAnalysis?.blackAccuracy)
             )
 
             // 4. Variation/exploration bar
@@ -301,36 +350,7 @@ struct AnalysisView: View {
                 .background(AppColors.surface)
             }
 
-            // 5. Controls (unified — works for both game and variation)
-            AnalysisControlsView(
-                isFlipped: viewModel.isFlipped,
-                isAtStart: !viewModel.canGoBack,
-                isAtEnd: !viewModel.canGoForward,
-                autoPlay: viewModel.autoPlay,
-                isAnalyzing: viewModel.analysisEngine.progress.isAnalyzing,
-                showReEvaluate: hasLoadedGame,
-                onGoToStart: { viewModel.goToStart() },
-                onGoBack: { viewModel.goBack() },
-                onGoForward: { viewModel.goForward() },
-                onGoToEnd: { viewModel.goToEnd() },
-                onToggleAutoPlay: { viewModel.toggleAutoPlay() },
-                onFlipBoard: { viewModel.flipBoard() },
-                onReEvaluate: { viewModel.reEvaluate(config: appState.engineConfig) },
-                onShare: { Analytics.shareOpened(source: "analysis"); showShareSheet = true }
-            )
-            .padding(.vertical, 2)
-
-            // 5. Classification summary (when analysis has results)
-            if !viewModel.analysisEngine.cache.isEmpty {
-                ClassificationSummaryView(
-                    cache: viewModel.analysisEngine.cache,
-                    currentMoveIndex: viewModel.gameState.currentMoveIndex,
-                    onNavigateToMove: { viewModel.gameState.goToMove($0) }
-                )
-                .padding(.horizontal, AppSpacing.sm)
-            }
-
-            // 6. Horizontal move list (chess.com style)
+            // 5. Horizontal move list — placed above controls so the thumb doesn't occlude it
             MoveListView(
                 moves: viewModel.gameState.game?.moves ?? [],
                 analysisCache: viewModel.analysisEngine.cache,
@@ -339,23 +359,45 @@ struct AnalysisView: View {
             )
             .padding(.horizontal, AppSpacing.sm)
 
-            // 7. Compact info bar (explanation + best move)
-            compactInfoBar
-                .padding(.horizontal, AppSpacing.sm)
-                .padding(.top, AppSpacing.xs)
+            // 6. Controls — nav only (Flip/Re-eval/Share live in the top toolbar)
+            AnalysisControlsView(
+                isAtStart: !viewModel.canGoBack,
+                isAtEnd: !viewModel.canGoForward,
+                autoPlay: viewModel.autoPlay,
+                onGoToStart: { viewModel.goToStart() },
+                onGoBack: { viewModel.goBack() },
+                onGoForward: { viewModel.goForward() },
+                onGoToEnd: { viewModel.goToEnd() },
+                onToggleAutoPlay: { viewModel.toggleAutoPlay() }
+            )
+            .padding(.vertical, 2)
 
-            // 8. Progress (if analyzing)
-            if viewModel.analysisEngine.progress.isAnalyzing {
-                analysisProgressBar
-                    .padding(.horizontal, AppSpacing.sm)
-                    .padding(.top, 2)
+            // 7. Reactive detail panel below controls — scrolls when content overflows.
+            // Board + controls stay anchored while the engine verdict changes here.
+            ScrollView {
+                VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                    if viewModel.isViewerOnlyMode {
+                        viewerUpgradeBanner
+                    } else {
+                        compactInfoBar
+                    }
+
+                    if !viewModel.isViewerOnlyMode && !viewModel.analysisEngine.cache.isEmpty {
+                        ClassificationSummaryView(
+                            cache: viewModel.analysisEngine.cache,
+                            currentMoveIndex: viewModel.gameState.currentMoveIndex,
+                            onNavigateToMove: { viewModel.gameState.goToMove($0) }
+                        )
+                    }
+
+                    if !viewModel.isViewerOnlyMode && viewModel.analysisEngine.progress.isAnalyzing {
+                        analysisProgressBar
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, AppSpacing.sm)
+                .padding(.vertical, AppSpacing.xs)
             }
-
-            // 9. Engine lines (fills remaining space, scrollable independently)
-            engineLinesPanel
-                .padding(.horizontal, AppSpacing.sm)
-                .padding(.top, AppSpacing.xs)
-                .padding(.bottom, AppSpacing.xs)
         }
     }
 
@@ -375,7 +417,7 @@ struct AnalysisView: View {
         let flipped = viewModel.isFlipped
         let topIsWhite = flipped
         let bottomIsWhite = !flipped
-        let showEvalBar = !isFENMode || showEngineHints
+        let showEvalBar = !viewModel.isViewerOnlyMode && (!isFENMode || showEngineHints)
 
         return HStack(spacing: 0) {
             // Left: Board column — vertically centered
@@ -385,15 +427,15 @@ struct AnalysisView: View {
                 playerHeader(
                     name: topIsWhite ? viewModel.displayWhiteName : viewModel.displayBlackName,
                     isWhite: topIsWhite,
-                    accuracy: topIsWhite
+                    accuracy: viewModel.isViewerOnlyMode ? nil : (topIsWhite
                         ? viewModel.analysisEngine.gameAnalysis?.whiteAccuracy
-                        : viewModel.analysisEngine.gameAnalysis?.blackAccuracy
+                        : viewModel.analysisEngine.gameAnalysis?.blackAccuracy)
                 )
                 .padding(.horizontal, AppSpacing.sm)
 
                 HStack(spacing: 0) {
                     if showEvalBar {
-                        EvalBarView(eval: viewModel.currentEval, sideToMoveIsWhite: evalSideIsWhite)
+                        EvalBarView(eval: viewModel.currentEval, sideToMoveIsWhite: evalSideIsWhite, isPending: viewModel.isExplorationAnalyzing)
                             .frame(height: boardSize)
                     }
 
@@ -434,27 +476,21 @@ struct AnalysisView: View {
                 playerHeader(
                     name: bottomIsWhite ? viewModel.displayWhiteName : viewModel.displayBlackName,
                     isWhite: bottomIsWhite,
-                    accuracy: bottomIsWhite
+                    accuracy: viewModel.isViewerOnlyMode ? nil : (bottomIsWhite
                         ? viewModel.analysisEngine.gameAnalysis?.whiteAccuracy
-                        : viewModel.analysisEngine.gameAnalysis?.blackAccuracy
+                        : viewModel.analysisEngine.gameAnalysis?.blackAccuracy)
                 )
                 .padding(.horizontal, AppSpacing.sm)
 
                 AnalysisControlsView(
-                    isFlipped: viewModel.isFlipped,
                     isAtStart: !viewModel.canGoBack,
                     isAtEnd: !viewModel.canGoForward,
                     autoPlay: viewModel.autoPlay,
-                    isAnalyzing: viewModel.analysisEngine.progress.isAnalyzing,
-                    showReEvaluate: hasLoadedGame,
                     onGoToStart: { viewModel.goToStart() },
                     onGoBack: { viewModel.goBack() },
                     onGoForward: { viewModel.goForward() },
                     onGoToEnd: { viewModel.goToEnd() },
-                    onToggleAutoPlay: { viewModel.toggleAutoPlay() },
-                    onFlipBoard: { viewModel.flipBoard() },
-                    onReEvaluate: { viewModel.reEvaluate(config: appState.engineConfig) },
-                    onShare: { Analytics.shareOpened(source: "analysis"); showShareSheet = true }
+                    onToggleAutoPlay: { viewModel.toggleAutoPlay() }
                 )
                 .padding(.vertical, AppSpacing.xs)
 
@@ -464,8 +500,14 @@ struct AnalysisView: View {
 
             // Right: Info panel
             VStack(spacing: 0) {
+                if viewModel.isViewerOnlyMode {
+                    viewerUpgradeBanner
+                        .padding(.horizontal, AppSpacing.sm)
+                        .padding(.top, AppSpacing.sm)
+                }
+
                 // Classification summary
-                if !viewModel.analysisEngine.cache.isEmpty {
+                if !viewModel.isViewerOnlyMode && !viewModel.analysisEngine.cache.isEmpty {
                     ClassificationSummaryView(
                         cache: viewModel.analysisEngine.cache,
                         currentMoveIndex: viewModel.gameState.currentMoveIndex,
@@ -476,21 +518,18 @@ struct AnalysisView: View {
                 }
 
                 // Move explanation + eval
-                compactInfoBar
-                    .padding(.horizontal, AppSpacing.sm)
-                    .padding(.top, AppSpacing.sm)
+                if !viewModel.isViewerOnlyMode {
+                    compactInfoBar
+                        .padding(.horizontal, AppSpacing.sm)
+                        .padding(.top, AppSpacing.sm)
+                }
 
                 // Progress
-                if viewModel.analysisEngine.progress.isAnalyzing {
+                if !viewModel.isViewerOnlyMode && viewModel.analysisEngine.progress.isAnalyzing {
                     analysisProgressBar
                         .padding(.horizontal, AppSpacing.sm)
                         .padding(.top, AppSpacing.xs)
                 }
-
-                // Engine lines
-                engineLinesPanel
-                    .padding(.horizontal, AppSpacing.sm)
-                    .padding(.top, AppSpacing.sm)
 
                 // Variation moves (when exploring)
                 iPadVariationBar
@@ -611,6 +650,41 @@ struct AnalysisView: View {
         }
     }
 
+    // MARK: - Viewer-only upgrade banner
+
+    private var viewerUpgradeBanner: some View {
+        Button { showPaywall = true } label: {
+            HStack(spacing: AppSpacing.sm) {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(AppColors.accent)
+
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Engine insights locked")
+                        .font(AppFonts.captionBold)
+                        .foregroundStyle(AppColors.textPrimary)
+                    Text("Unlock evaluation, best moves, accuracy")
+                        .font(AppFonts.small)
+                        .foregroundStyle(AppColors.textMuted)
+                }
+
+                Spacer()
+
+                Text("Unlock")
+                    .font(AppFonts.captionBold)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, AppSpacing.sm)
+                    .padding(.vertical, 4)
+                    .background(AppColors.accent)
+                    .clipShape(Capsule())
+            }
+            .padding(AppSpacing.sm)
+            .background(AppColors.accent.opacity(0.1))
+            .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadiusSm))
+        }
+        .buttonStyle(.plain)
+    }
+
     // MARK: - Engine Detail Sheet
 
     private var engineDetailSheet: some View {
@@ -670,6 +744,7 @@ struct AnalysisView: View {
     // MARK: - Board Arrows
 
     private var boardArrows: [PieceAnalysis.BoardArrow] {
+        if viewModel.isViewerOnlyMode { return [] }
         let config = appState.engineConfig
 
         // In exploration mode, show best move from exploration analysis
@@ -777,51 +852,6 @@ struct AnalysisView: View {
     }
 
     /// Engine lines panel — fills remaining space, scrollable independently
-    private var engineLinesPanel: some View {
-        Group {
-            let lines = viewModel.currentMoveAnalysis?.engineLines ?? []
-            if !lines.isEmpty {
-                ScrollView(.vertical, showsIndicators: true) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        ForEach(Array(lines.enumerated()), id: \.offset) { index, line in
-                            HStack(spacing: AppSpacing.sm) {
-                                Text(line.eval.displayTextWhitePerspective(
-                                    sideToMoveIsWhite: viewModel.displayBoard.sideToMove == .white
-                                ))
-                                .font(AppFonts.evalText)
-                                .foregroundStyle(evalLineColor(line.eval))
-                                .frame(width: 44, alignment: .trailing)
-
-                                Text(line.moves.prefix(10).joined(separator: " "))
-                                    .font(AppFonts.moveText)
-                                    .foregroundStyle(index == 0 ? AppColors.textPrimary : AppColors.textSecondary)
-                                    .lineLimit(1)
-                            }
-                            .padding(.vertical, 3)
-                            .padding(.horizontal, AppSpacing.sm)
-
-                            if index < lines.count - 1 {
-                                Divider().background(AppColors.surfaceLight)
-                            }
-                        }
-                    }
-                    .padding(.vertical, AppSpacing.xs)
-                }
-                .background(AppColors.surface)
-                .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadiusSm))
-            } else {
-                Spacer(minLength: 0)
-            }
-        }
-    }
-
-    private func evalLineColor(_ eval: EngineEval) -> Color {
-        let whiteCP = MoveClassifier.toWhiteCP(eval, sideToMoveIsWhite: viewModel.displayBoard.sideToMove == .white)
-        if whiteCP > 50 { return AppColors.win }
-        if whiteCP < -50 { return AppColors.loss }
-        return AppColors.textSecondary
-    }
-
     private func gameEndOverlay(_ status: AnalysisViewModel.GameEndStatus) -> some View {
         let icon: String
         let color: Color
@@ -962,6 +992,7 @@ struct AnalysisView: View {
     }
 
     private var displayClassification: MoveClassification? {
+        if viewModel.isViewerOnlyMode { return nil }
         if viewModel.isExploring {
             // In FEN mode, only show classification when hints are enabled
             if isFENMode && !showEngineHints { return nil }
@@ -995,6 +1026,7 @@ struct AnalysisView: View {
         if let game = chessComGame { viewModel.loadChessComGame(game, profileUsername: profileUsername) }
         else if let pgn = pgn { viewModel.loadPGN(pgn) }
         else if let fen = fen {
+            // FEN/free-play mode: no gate, free
             viewModel.loadFEN(fen)
             viewModel.isFlipped = initialFlip
             viewModel.explorationAnalysisEnabled = !studyMode
@@ -1004,10 +1036,48 @@ struct AnalysisView: View {
             }
             return
         }
+        // PGN/chess.com game: gate the engine analysis
         if !studyMode {
-            Task {
-                await viewModel.startAnalysis(config: appState.engineConfig)
-            }
+            resolveAccessAndAnalyze()
         }
+    }
+
+    private func resolveAccessAndAnalyze() {
+        guard !accessResolved else { return }
+        accessResolved = true
+
+        guard let gameId = viewModel.gameState.game?.id else { return }
+
+        // Fully cached already — free to reopen.
+        if AnalysisCache.shared.isCached(gameId) {
+            runAnalysis()
+            return
+        }
+
+        // Already paid for (quota/ad) but analysis didn't complete — keep it free.
+        if AnalysisCache.shared.isPending(gameId) {
+            runAnalysis()
+            return
+        }
+
+        if appState.premium.isPremium {
+            runAnalysis()
+            return
+        }
+        if appState.analysisQuota.hasFreeToday {
+            appState.analysisQuota.consumeFree()
+            AnalysisCache.shared.markPending(gameId)
+            runAnalysis()
+            return
+        }
+
+        // No free left and not premium — start in viewer mode, offer paywall.
+        viewModel.isViewerOnlyMode = true
+        showPaywall = true
+    }
+
+    private func runAnalysis() {
+        viewModel.isViewerOnlyMode = false
+        Task { await viewModel.startAnalysis(config: appState.engineConfig) }
     }
 }

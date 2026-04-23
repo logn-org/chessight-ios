@@ -4,6 +4,9 @@ struct EvalBarView: View {
     let eval: EngineEval
     var sideToMoveIsWhite: Bool = true
     var isVertical: Bool = true
+    /// When true, the bar dims and hides its label — the displayed value is stale
+    /// while a fresh engine analysis is running.
+    var isPending: Bool = false
 
     /// Sticky display values — only updated with real engine data
     @State private var whiteRatio: Double = 0.5
@@ -25,21 +28,23 @@ struct EvalBarView: View {
                     )
                     .animation(hasReceivedData ? .easeInOut(duration: 0.35) : nil, value: whiteRatio)
 
-                VStack {
-                    if whiteRatio < 0.5 {
-                        Text(evalLabel)
-                            .font(AppFonts.evalBarText)
-                            .foregroundStyle(AppColors.evalWhite)
-                            .lineLimit(1).minimumScaleFactor(0.6)
-                            .padding(.horizontal, 2).padding(.top, 2)
-                        Spacer()
-                    } else {
-                        Spacer()
-                        Text(evalLabel)
-                            .font(AppFonts.evalBarText)
-                            .foregroundStyle(AppColors.evalBlack)
-                            .lineLimit(1).minimumScaleFactor(0.6)
-                            .padding(.horizontal, 2).padding(.bottom, 2)
+                if !isPending {
+                    VStack {
+                        if whiteRatio < 0.5 {
+                            Text(evalLabel)
+                                .font(AppFonts.evalBarText)
+                                .foregroundStyle(AppColors.evalWhite)
+                                .lineLimit(1).minimumScaleFactor(0.6)
+                                .padding(.horizontal, 2).padding(.top, 2)
+                            Spacer()
+                        } else {
+                            Spacer()
+                            Text(evalLabel)
+                                .font(AppFonts.evalBarText)
+                                .foregroundStyle(AppColors.evalBlack)
+                                .lineLimit(1).minimumScaleFactor(0.6)
+                                .padding(.horizontal, 2).padding(.bottom, 2)
+                        }
                     }
                 }
             }
@@ -47,6 +52,8 @@ struct EvalBarView: View {
         .frame(width: isVertical ? AppSpacing.evalBarWidth : nil,
                height: isVertical ? nil : AppSpacing.evalBarWidth)
         .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadiusSm))
+        .opacity(isPending ? 0.35 : 1.0)
+        .animation(.easeInOut(duration: 0.15), value: isPending)
         .onChange(of: eval) { _, _ in updateIfValid() }
         .onChange(of: sideToMoveIsWhite) { _, _ in updateIfValid() }
         .onAppear { updateIfValid() }

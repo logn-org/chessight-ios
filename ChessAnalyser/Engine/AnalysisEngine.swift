@@ -63,15 +63,15 @@ final class AnalysisEngine {
 
         // Check session cache first — if this game was already analyzed, reuse it
         if let cached = EngineManager.shared.getCachedGameAnalysis(id: game.id) {
-            cache = Dictionary(uniqueKeysWithValues: cached.moves.map { ($0.moveIndex, $0) })
-            gameAnalysis = cached
-            progress = AnalysisProgress(
-                currentMove: game.moves.count,
-                totalMoves: game.moves.count,
-                isAnalyzing: false,
-                currentDepth: cached.engineDepth
-            )
+            hydrateFromCachedAnalysis(cached)
             return // Already analyzed — no need to re-run engine
+        }
+
+        // Fall back to disk cache — persists across launches
+        if let cached = AnalysisCache.shared.load(id: game.id) {
+            EngineManager.shared.cacheGameAnalysis(cached) // warm session cache
+            hydrateFromCachedAnalysis(cached)
+            return
         }
 
         cache = [:]
@@ -284,6 +284,17 @@ final class AnalysisEngine {
         )
     }
 
+    private func hydrateFromCachedAnalysis(_ cached: GameAnalysis) {
+        cache = Dictionary(uniqueKeysWithValues: cached.moves.map { ($0.moveIndex, $0) })
+        gameAnalysis = cached
+        progress = AnalysisProgress(
+            currentMove: cached.moves.count,
+            totalMoves: cached.moves.count,
+            isAnalyzing: false,
+            currentDepth: cached.engineDepth
+        )
+    }
+
     private func finalizeGameAnalysis(game: ParsedGame, depth: Int) {
         let moves = game.moves.indices.compactMap { cache[$0] }
         guard moves.count == game.moves.count else {
@@ -315,6 +326,7 @@ final class AnalysisEngine {
         )
         gameAnalysis = analysis
         EngineManager.shared.cacheGameAnalysis(analysis) // Session cache
+        AnalysisCache.shared.save(analysis) // Persistent disk cache (FIFO-capped)
 
         let durationMs = Int((CFAbsoluteTimeGetCurrent() - analysisStartTime) * 1000)
         Analytics.analysisCompleted(moveCount: moves.count, durationMs: durationMs, depthPreset: "\(depth)")

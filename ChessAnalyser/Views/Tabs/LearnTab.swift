@@ -190,7 +190,7 @@ struct FamousGamesList: View {
         List {
             ForEach(SampleGames.all, id: \.name) { sample in
                 NavigationLink {
-                    AnalysisView(pgn: sample.pgn)
+                    AnalysisView(pgn: sample.pgn, studyMode: true, studyTitle: sample.name)
                 } label: {
                     HStack {
                         Image(systemName: "theatermasks.fill")

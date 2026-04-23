@@ -1,6 +1,8 @@
 import SwiftUI
 import FirebaseCore
 import FirebaseCrashlytics
+import GoogleMobileAds
+import AppTrackingTransparency
 
 @main
 struct ChessightApp: App {
@@ -17,6 +19,12 @@ struct ChessightApp: App {
             ContentView()
                 .environment(appState)
                 .preferredColorScheme(.dark)
+                .task {
+                    await requestTrackingPermission()
+                    MobileAds.shared.start(completionHandler: nil)
+                    appState.ads.preload()
+                    await appState.premium.start()
+                }
                 .onAppear {
                     let isIPad = UIDevice.current.userInterfaceIdiom == .pad
                     let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
@@ -26,6 +34,13 @@ struct ChessightApp: App {
                     handleIncomingURL(url)
                 }
         }
+    }
+
+    private func requestTrackingPermission() async {
+        guard ATTrackingManager.trackingAuthorizationStatus == .notDetermined else { return }
+        // Small delay so the prompt doesn't compete with launch animations.
+        try? await Task.sleep(nanoseconds: 500_000_000)
+        _ = await ATTrackingManager.requestTrackingAuthorization()
     }
 
     private func handleIncomingURL(_ url: URL) {

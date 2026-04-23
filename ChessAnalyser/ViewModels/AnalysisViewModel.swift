@@ -31,6 +31,10 @@ final class AnalysisViewModel {
     /// When true, engine analysis runs during exploration. When false, moves are made silently.
     var explorationAnalysisEnabled = true
 
+    /// When true, engine UI (eval bar, classifications, lines, accuracy, best-move arrows) is hidden
+    /// and `startAnalysis()` is skipped. User can still navigate moves and play variations.
+    var isViewerOnlyMode = false
+
     // Variation: exploration moves branching from the main game
     var isExploring = false
     var explorationBoard: ChessBoard?
@@ -42,6 +46,9 @@ final class AnalysisViewModel {
     var lastExplorationClassification: MoveClassification?
     private var savedMoveIndex: Int = -1
     private var explorationAnalysisTask: Task<Void, Never>?
+    /// True while a variation-move analysis is in flight. The eval bar dims during this window
+    /// so the stale pre-move eval doesn't flash before the fresh result arrives.
+    var isExplorationAnalyzing = false
     /// The last suggested best move UCI — used to detect if user played the suggested move
     private var lastSuggestedBestMove: String?
 
@@ -83,6 +90,7 @@ final class AnalysisViewModel {
     // MARK: - Analysis
 
     func startAnalysis(config: EngineConfiguration) async {
+        if isViewerOnlyMode { return }
         CrashLogger.logEngine("Starting analysis (depth: \(config.depth))")
         let source = whiteUsername != nil ? "profile" : "pgn"
         Analytics.gameAnalyzed(source: source, moveCount: gameState.game?.moves.count ?? 0, depthPreset: config.depthPreset.rawValue)
@@ -102,10 +110,12 @@ final class AnalysisViewModel {
 
     /// Force re-evaluate: clear ALL caches and re-run analysis from scratch
     func reEvaluate(config: EngineConfiguration) {
+        if isViewerOnlyMode { return }
         guard let game = gameState.game else { return }
         // Exit variation if in one
         if isExploring { exitExploration() }
-        // Clear ALL caches — session game cache, session eval cache, local caches
+        // Clear ALL caches — disk cache, session game cache, session eval cache, local caches
+        AnalysisCache.shared.delete(id: game.id)
         EngineManager.shared.removeCachedGameAnalysis(id: game.id)
         EngineManager.shared.clearSessionEvalCache()
         analysisEngine.cancelAll()
@@ -185,13 +195,11 @@ final class AnalysisViewModel {
             } else {
                 // At branch point — park variation, go back in main game
                 parkVariation()
-                gameState.goBack()
-                onMoveChanged()
+                gameState.goBack() // .onChange observer fires onMoveChanged
             }
         } else {
             // Never clear parked variation on back — it persists until Resume/dismiss
-            gameState.goBack()
-            onMoveChanged()
+            gameState.goBack() // .onChange observer fires onMoveChanged
         }
     }
 
@@ -209,8 +217,7 @@ final class AnalysisViewModel {
         } else if hasParkedVariation && gameState.currentMoveIndex == parkedSavedMoveIndex {
             unparkVariation()
         } else {
-            gameState.goForward()
-            onMoveChanged()
+            gameState.goForward() // .onChange observer fires onMoveChanged
         }
     }
 
@@ -219,8 +226,7 @@ final class AnalysisViewModel {
             parkVariation()
         }
         // Keep parked variation — don't clear it
-        gameState.goToStart()
-        onMoveChanged()
+        gameState.goToStart() // .onChange observer fires onMoveChanged
     }
 
     /// Jump to a specific exploration move by index (tapping variation moves)
@@ -248,8 +254,7 @@ final class AnalysisViewModel {
             }
         } else {
             // Keep parked variation — don't clear it
-            gameState.goToEnd()
-            onMoveChanged()
+            gameState.goToEnd() // .onChange observer fires onMoveChanged
         }
     }
 
@@ -357,8 +362,7 @@ final class AnalysisViewModel {
                 if let nextMove = nextGameMove,
                    "\(nextMove.from)\(nextMove.to)" == moveUCI {
                     deselect()
-                    gameState.goForward()
-                    onMoveChanged()
+                    gameState.goForward() // .onChange observer fires onMoveChanged
                 } else {
                     enterExploration()
                     makeExplorationMove(from: selected, to: square)
@@ -500,6 +504,7 @@ final class AnalysisViewModel {
         Analytics.variationExplored(moveCount: explorationMoves.count, fromGame: true)
         saveCurrentEvalToSticky()
         explorationAnalysisTask?.cancel()
+        isExplorationAnalyzing = false
         isExploring = false
         explorationBoard = nil
         explorationMoves = []
@@ -561,6 +566,7 @@ final class AnalysisViewModel {
         // Always clear — fresh analysis will replace
         explorationAfterResult = nil
         lastSuggestedBestMove = nil
+        isExplorationAnalyzing = true
 
         explorationAnalysisTask = Task {
             guard let stockfish = analysisEngine.stockfishForExploration else { return }
@@ -569,6 +575,7 @@ final class AnalysisViewModel {
             guard !Task.isCancelled else { return }
             self.explorationAfterResult = afterResult
             self.lastSuggestedBestMove = afterResult.bestMove
+            self.isExplorationAnalyzing = false
 
             // Classify the last move if we have one
             guard !Task.isCancelled else { return }
@@ -595,6 +602,7 @@ final class AnalysisViewModel {
         explorationAnalysisTask?.cancel()
         explorationAfterResult = nil
         lastSuggestedBestMove = nil
+        isExplorationAnalyzing = true
 
         explorationAnalysisTask = Task {
             guard let stockfish = analysisEngine.stockfishForExploration else { return }
@@ -602,6 +610,7 @@ final class AnalysisViewModel {
             guard !Task.isCancelled else { return }
             self.explorationAfterResult = afterResult
             self.lastSuggestedBestMove = afterResult.bestMove
+            self.isExplorationAnalyzing = false
             self.explorationBeforeResult = afterResult
         }
     }
@@ -629,6 +638,7 @@ final class AnalysisViewModel {
         explorationAfterResult = nil
         lastExplorationClassification = nil
         lastSuggestedBestMove = nil
+        isExplorationAnalyzing = false
     }
 
     /// The exploration move at the current view index
@@ -826,8 +836,7 @@ final class AnalysisViewModel {
                 while autoPlay && !gameState.isAtEnd {
                     try? await Task.sleep(for: .seconds(1.5))
                     guard autoPlay else { break }
-                    gameState.goForward()
-                    onMoveChanged()
+                    gameState.goForward() // .onChange observer fires onMoveChanged
                 }
             }
             autoPlay = false
@@ -921,7 +930,10 @@ final class AnalysisViewModel {
 
     func cleanup() {
         stopAutoPlay()
-        analysisEngine.cancelAll()
+        // Don't cancel the engine's background analysis — let it finish even if the
+        // user switches tabs or navigates away. The result saves to disk cache, so
+        // returning later loads instantly. The pending-analyses flag protects the
+        // user's paid quota/ad if the view is truly destroyed mid-run.
         explorationAnalysisTask?.cancel()
     }
 }

@@ -51,28 +51,28 @@ struct BoardEditorView: View {
                     .frame(maxWidth: .infinity)
                 }
             } else {
-                VStack(spacing: AppSpacing.sm) {
-                    // Mode selector
-                    modeSelector
+                ScrollView {
+                    VStack(spacing: AppSpacing.sm) {
+                        // Mode selector
+                        modeSelector
 
-                    // Board
-                    EditorBoardView(
-                        board: viewModel.board,
-                        pickedUpSquare: viewModel.pickedUpSquare,
-                        editorMode: viewModel.editorMode,
-                        flipped: viewModel.isFlipped,
-                        onTapSquare: { viewModel.tapSquare($0) },
-                        onDragMove: { from, to in viewModel.dragMove(from: from, to: to) }
-                    )
-                    .frame(width: boardSize, height: boardSize)
-                    .padding(.horizontal, AppSpacing.sm)
+                        // Board
+                        EditorBoardView(
+                            board: viewModel.board,
+                            pickedUpSquare: viewModel.pickedUpSquare,
+                            editorMode: viewModel.editorMode,
+                            flipped: viewModel.isFlipped,
+                            onTapSquare: { viewModel.tapSquare($0) },
+                            onDragMove: { from, to in viewModel.dragMove(from: from, to: to) }
+                        )
+                        .frame(width: boardSize, height: boardSize)
+                        .padding(.horizontal, AppSpacing.sm)
 
-                    editorPiecePalettes
-                    editorActionButtons
-                    editorFENBar
-                    editorPlayButtons
-
-                    Spacer()
+                        editorPiecePalettes
+                        editorActionButtons
+                        editorFENBar
+                        editorPlayButtons
+                    }
                 }
             }
         }

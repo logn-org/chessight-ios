@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 
 enum PGNParserError: Error, LocalizedError {
     case invalidPGN(String)
@@ -256,9 +257,10 @@ struct PGNParser {
         if let site = headers["Site"], site.contains("chess.com") {
             return site
         }
-        // Otherwise hash the PGN
-        var hasher = Hasher()
-        hasher.combine(pgn)
-        return "game_\(abs(hasher.finalize()))"
+        // Stable hash — Swift's Hasher is randomly seeded per process,
+        // which would orphan cached analyses across app launches.
+        let digest = SHA256.hash(data: Data(pgn.utf8))
+        let hex = digest.compactMap { String(format: "%02x", $0) }.joined()
+        return "game_\(hex.prefix(16))"
     }
 }

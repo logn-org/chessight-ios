@@ -26,7 +26,7 @@ struct HomeTab: View {
             }
             .onAppear {
                 Analytics.screenViewed("home")
-                recentAnalyses = appState.analysisCache.recentAnalyses(limit: 10)
+                recentAnalyses = appState.analysisCache.recentAnalyses(limit: 1)
             }
         }
     }
@@ -94,24 +94,26 @@ struct HomeTab: View {
                 }
             }
 
-            // Recent Analyses
+            // Recent Analysis (just the most recent; full list under "Show more")
             if !recentAnalyses.isEmpty {
-                HStack(alignment: .top, spacing: AppSpacing.lg) {
-                    VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                        Text("Recent Analyses")
+                VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                    HStack {
+                        Text("Recent Analysis")
                             .font(.system(size: 18, weight: .semibold))
                             .foregroundStyle(AppColors.textPrimary)
+                        Spacer()
+                        showMoreLink
+                    }
 
-                        ForEach(recentAnalyses) { analysis in
-                            NavigationLink {
-                                AnalysisView(pgn: analysis.pgn)
-                            } label: {
-                                recentAnalysisRow(analysis)
-                            }
+                    ForEach(recentAnalyses) { analysis in
+                        NavigationLink {
+                            AnalysisView(pgn: analysis.pgn)
+                        } label: {
+                            recentAnalysisRow(analysis)
                         }
                     }
-                    .frame(maxWidth: .infinity)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         .padding(.horizontal, AppSpacing.xl)
@@ -195,13 +197,17 @@ struct HomeTab: View {
             }
             .padding(.horizontal, AppSpacing.md)
 
-            // Recent Analyses
+            // Recent Analysis (just the most recent; full list under "Show more")
             if !recentAnalyses.isEmpty {
                 VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                    Text("Recent Analyses")
-                        .font(AppFonts.subtitle)
-                        .foregroundStyle(AppColors.textPrimary)
-                        .padding(.horizontal, AppSpacing.md)
+                    HStack {
+                        Text("Recent Analysis")
+                            .font(AppFonts.subtitle)
+                            .foregroundStyle(AppColors.textPrimary)
+                        Spacer()
+                        showMoreLink
+                    }
+                    .padding(.horizontal, AppSpacing.md)
 
                     ForEach(recentAnalyses) { analysis in
                         NavigationLink {
@@ -210,10 +216,28 @@ struct HomeTab: View {
                             recentAnalysisRow(analysis)
                         }
                     }
+                    .padding(.horizontal, AppSpacing.md)
                 }
             }
         }
         .padding(.top, AppSpacing.md)
+    }
+
+    @ViewBuilder
+    private var showMoreLink: some View {
+        if appState.analysisCache.cachedGameIds.count > 1 {
+            NavigationLink {
+                AllRecentAnalysesView()
+            } label: {
+                HStack(spacing: 4) {
+                    Text("Show all (\(appState.analysisCache.cachedGameIds.count))")
+                        .font(AppFonts.captionBold)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 10, weight: .semibold))
+                }
+                .foregroundStyle(AppColors.accent)
+            }
+        }
     }
 
     // MARK: - Shared Components
@@ -236,6 +260,18 @@ struct HomeTab: View {
     }
 
     private func recentAnalysisRow(_ analysis: GameAnalysis) -> some View {
+        RecentAnalysisRow(analysis: analysis)
+    }
+}
+
+// MARK: - Shared row
+
+struct RecentAnalysisRow: View {
+    let analysis: GameAnalysis
+    /// Set to false when the row is embedded in a List (SwiftUI adds its own disclosure chevron).
+    var showChevron: Bool = true
+
+    var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: AppSpacing.xs) {
                 Text("\(analysis.white) vs \(analysis.black)")
@@ -266,12 +302,92 @@ struct HomeTab: View {
                     .foregroundStyle(AppColors.textSecondary)
             }
 
-            Image(systemName: "chevron.right")
-                .font(AppFonts.caption)
-                .foregroundStyle(AppColors.textMuted)
+            if showChevron {
+                Image(systemName: "chevron.right")
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.textMuted)
+            }
         }
         .padding(AppSpacing.md)
         .background(AppColors.surface)
         .clipShape(RoundedRectangle(cornerRadius: AppSpacing.cornerRadius))
+    }
+}
+
+// MARK: - All Recent Analyses
+
+struct AllRecentAnalysesView: View {
+    @Environment(AppState.self) private var appState
+    @State private var analyses: [GameAnalysis] = []
+    @State private var showClearAllAlert = false
+
+    var body: some View {
+        Group {
+            if analyses.isEmpty {
+                VStack(spacing: AppSpacing.md) {
+                    Image(systemName: "tray")
+                        .font(.system(size: 40))
+                        .foregroundStyle(AppColors.textMuted)
+                    Text("No analyses yet")
+                        .font(AppFonts.body)
+                        .foregroundStyle(AppColors.textMuted)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                List {
+                    ForEach(analyses) { analysis in
+                        NavigationLink {
+                            AnalysisView(pgn: analysis.pgn)
+                        } label: {
+                            RecentAnalysisRow(analysis: analysis, showChevron: false)
+                        }
+                        .listRowBackground(AppColors.background)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 4, leading: AppSpacing.md, bottom: 4, trailing: AppSpacing.md))
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                delete(analysis)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                    }
+                }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+            }
+        }
+        .background(AppColors.background)
+        .navigationTitle("Recent Analyses")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbar {
+            if !analyses.isEmpty {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { showClearAllAlert = true } label: {
+                        Image(systemName: "trash")
+                            .foregroundStyle(AppColors.blunder)
+                    }
+                }
+            }
+        }
+        .alert("Clear all analyses?", isPresented: $showClearAllAlert) {
+            Button("Cancel", role: .cancel) {}
+            Button("Clear All", role: .destructive) {
+                appState.analysisCache.clearAll()
+                analyses = []
+            }
+        } message: {
+            Text("This removes all \(analyses.count) cached analyses. Opening a game again will consume your free daily quota or require premium / a rewarded ad.")
+        }
+        .onAppear {
+            analyses = appState.analysisCache.recentAnalyses(limit: AnalysisCache.maxCachedGames)
+            Analytics.screenViewed("recent_analyses")
+        }
+    }
+
+    private func delete(_ analysis: GameAnalysis) {
+        appState.analysisCache.delete(id: analysis.id)
+        analyses.removeAll { $0.id == analysis.id }
     }
 }
