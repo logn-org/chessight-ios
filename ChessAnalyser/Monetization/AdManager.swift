@@ -33,6 +33,7 @@ final class AdManager: NSObject {
         isLoading = true
         defer { isLoading = false }
 
+        CrashLogger.logAds("Loading rewarded ad unit \(Self.rewardedAdUnitID)")
         do {
             let ad = try await RewardedAd.load(
                 with: Self.rewardedAdUnitID,
@@ -41,20 +42,25 @@ final class AdManager: NSObject {
             ad.fullScreenContentDelegate = self
             rewardedAd = ad
             isReady = true
+            CrashLogger.logAds("Rewarded ad loaded")
         } catch {
             rewardedAd = nil
             isReady = false
+            CrashLogger.logAdsError(error, context: "RewardedAd.load")
         }
     }
 
     /// Present the rewarded ad. Returns `true` if user earned the reward (watched to completion).
     func showRewardedAd() async -> Bool {
+        CrashLogger.logAds("Show rewarded ad requested — ready=\(isReady)")
         guard let ad = rewardedAd,
               let root = Self.topViewController() else {
-            // Try one load and fail fast; the caller will show an error message.
+            if rewardedAd == nil { CrashLogger.logAds("No ad ready — attempting lazy load") }
+            if Self.topViewController() == nil { CrashLogger.logAds("No root view controller to present from") }
             await loadRewardedAd()
             guard let ad = rewardedAd,
                   let root = Self.topViewController() else {
+                CrashLogger.logAds("Show aborted — ad still not ready after retry")
                 return false
             }
             return await present(ad, from: root)
@@ -65,10 +71,12 @@ final class AdManager: NSObject {
     private func present(_ ad: RewardedAd, from root: UIViewController) async -> Bool {
         didEarnReward = false
         isReady = false
+        CrashLogger.logAds("Presenting rewarded ad")
         return await withCheckedContinuation { continuation in
             self.rewardContinuation = continuation
             ad.present(from: root) { [weak self] in
                 self?.didEarnReward = true
+                CrashLogger.logAds("User earned reward")
             }
         }
     }
@@ -92,16 +100,17 @@ extension AdManager: FullScreenContentDelegate {
     nonisolated func adDidDismissFullScreenContent(_ ad: FullScreenPresentingAd) {
         Task { @MainActor in
             let earned = self.didEarnReward
+            CrashLogger.logAds("Ad dismissed — rewardEarned=\(earned)")
             self.rewardContinuation?.resume(returning: earned)
             self.rewardContinuation = nil
             self.rewardedAd = nil
-            // Preload next one
             await self.loadRewardedAd()
         }
     }
 
     nonisolated func ad(_ ad: FullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
         Task { @MainActor in
+            CrashLogger.logAdsError(error, context: "didFailToPresentFullScreenContent")
             self.rewardContinuation?.resume(returning: false)
             self.rewardContinuation = nil
             self.rewardedAd = nil

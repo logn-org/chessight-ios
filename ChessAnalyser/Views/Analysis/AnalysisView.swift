@@ -1046,32 +1046,37 @@ struct AnalysisView: View {
         guard !accessResolved else { return }
         accessResolved = true
 
-        guard let gameId = viewModel.gameState.game?.id else { return }
+        guard let gameId = viewModel.gameState.game?.id else {
+            CrashLogger.logMonetization("Gate: no game.id — skipping analysis")
+            return
+        }
 
-        // Fully cached already — free to reopen.
         if AnalysisCache.shared.isCached(gameId) {
+            CrashLogger.logMonetization("Gate: cache hit for \(gameId) — free reopen")
             runAnalysis()
             return
         }
 
-        // Already paid for (quota/ad) but analysis didn't complete — keep it free.
         if AnalysisCache.shared.isPending(gameId) {
+            CrashLogger.logMonetization("Gate: pending \(gameId) — free retry (paid-but-incomplete)")
             runAnalysis()
             return
         }
 
         if appState.premium.isPremium {
+            CrashLogger.logMonetization("Gate: premium — granting analysis")
             runAnalysis()
             return
         }
         if appState.analysisQuota.hasFreeToday {
+            CrashLogger.logMonetization("Gate: consuming daily free quota for \(gameId)")
             appState.analysisQuota.consumeFree()
             AnalysisCache.shared.markPending(gameId)
             runAnalysis()
             return
         }
 
-        // No free left and not premium — start in viewer mode, offer paywall.
+        CrashLogger.logMonetization("Gate: paywall for \(gameId) — no free quota, not premium")
         viewModel.isViewerOnlyMode = true
         showPaywall = true
     }

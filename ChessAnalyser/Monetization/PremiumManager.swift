@@ -24,16 +24,25 @@ final class PremiumManager {
     }
 
     func start() async {
+        CrashLogger.logMonetization("PremiumManager.start — productID=\(Self.productID), isPremium=\(isPremium)")
         await loadProduct()
         await refreshEntitlement()
     }
 
     func loadProduct() async {
+        CrashLogger.logMonetization("Loading product \(Self.productID)")
         do {
             let products = try await Product.products(for: [Self.productID])
-            product = products.first
+            if let p = products.first {
+                product = p
+                CrashLogger.logMonetization("Product loaded: id=\(p.id) displayPrice=\(p.displayPrice)")
+            } else {
+                product = nil
+                CrashLogger.logMonetization("Product load returned empty — check App Store Connect IAP exists, product ID matches, and Paid Apps Agreement is signed")
+            }
         } catch {
             purchaseError = "Failed to load product: \(error.localizedDescription)"
+            CrashLogger.logMonetizationError(error, context: "Product.products(for:)")
         }
     }
 
@@ -41,14 +50,17 @@ final class PremiumManager {
     @discardableResult
     func purchase() async -> Bool {
         guard let product else {
+            CrashLogger.logMonetization("Purchase requested but product is nil — reloading")
             await loadProduct()
             guard product != nil else {
                 purchaseError = "Product not available"
+                CrashLogger.logMonetization("Purchase aborted: product still nil after reload")
                 return false
             }
             return await purchase()
         }
 
+        CrashLogger.logMonetization("Purchase starting for \(product.id)")
         isPurchasing = true
         defer { isPurchasing = false }
 
@@ -57,18 +69,23 @@ final class PremiumManager {
             switch result {
             case .success(let verification):
                 let tx = try checkVerified(verification)
+                CrashLogger.logMonetization("Purchase succeeded: originalID=\(tx.originalID)")
                 await grantEntitlement()
                 await tx.finish()
                 return true
             case .userCancelled:
+                CrashLogger.logMonetization("Purchase cancelled by user")
                 return false
             case .pending:
+                CrashLogger.logMonetization("Purchase pending (e.g. Ask to Buy / SCA)")
                 return false
             @unknown default:
+                CrashLogger.logMonetization("Purchase returned unknown result")
                 return false
             }
         } catch {
             purchaseError = error.localizedDescription
+            CrashLogger.logMonetizationError(error, context: "product.purchase()")
             return false
         }
     }
@@ -93,8 +110,10 @@ final class PremiumManager {
     }
 
     func restore() async {
+        CrashLogger.logMonetization("Restore requested")
         try? await AppStore.sync()
         await refreshEntitlement()
+        CrashLogger.logMonetization("Restore finished — isPremium=\(isPremium)")
     }
 
     // MARK: - Private
@@ -102,6 +121,7 @@ final class PremiumManager {
     private func grantEntitlement() async {
         isPremium = true
         UserDefaults.standard.set(true, forKey: entitlementKey)
+        CrashLogger.logMonetization("Entitlement granted — isPremium=true")
     }
 
     private func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
