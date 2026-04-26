@@ -95,7 +95,7 @@ struct SettingsTab: View {
                         Text("Version")
                         Spacer()
                         HStack(spacing: AppSpacing.xs) {
-                            Text("1.0.0")
+                            Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.2.0")
                                 .foregroundStyle(AppColors.textSecondary)
                             Text("BETA")
                                 .font(.system(size: 9, weight: .bold))
@@ -138,7 +138,7 @@ struct SettingsTab: View {
                     }
                     .listRowBackground(AppColors.surface)
 
-                    Link(destination: URL(string: "https://logn-org.github.io/policies/chessight/privacy-policy.html") ?? URL(fileURLWithPath: "/")) {
+                    Link(destination: URL(string: "https://policies.logncomplexity.com/chessight/privacy-policy") ?? URL(fileURLWithPath: "/")) {
                         HStack {
                             Text("Privacy Policy")
                                 .foregroundStyle(AppColors.textPrimary)

@@ -158,6 +158,16 @@ struct MoveClassifier {
             }
         }
 
+        // 2. Win-probability-based "missed win" (chess.com-style):
+        //    best move keeps a winning position (W_best > 80%), played move drops to
+        //    drawish or worse (W_played < 55%). This is the cleanest, most user-facing
+        //    trigger — phrased exactly as players think about missed opportunities.
+        let wpBest   = expectedPoints(bestMoveEval, sideToMoveIsWhite: isWhite,   forWhite: isWhite)
+        let wpPlayed = expectedPoints(evalAfter,    sideToMoveIsWhite: !isWhite,  forWhite: isWhite)
+        if wpBest > 0.80 && wpPlayed < 0.55 {
+            return true
+        }
+
         // Convert to moving side's perspective for comparisons
         let bestWhiteCP = toWhiteCP(bestMoveEval, sideToMoveIsWhite: isWhite)
         let playedWhiteCP = toWhiteCP(evalAfter, sideToMoveIsWhite: !isWhite)
@@ -166,13 +176,13 @@ struct MoveClassifier {
         let bestForMe = isWhite ? bestWhiteCP : -bestWhiteCP
         let playedForMe = isWhite ? playedWhiteCP : -playedWhiteCP
 
-        // 2. Missed winning advantage: best move gives ≥150cp more than played
+        // 3. Missed winning advantage: best move gives ≥150cp more than played
         let missedGain = bestForMe - playedForMe
         if missedGain >= 150 && bestForMe >= 100 {
             return true
         }
 
-        // 3. Missed going from equal to winning
+        // 4. Missed going from equal to winning
         let beforeWhiteCP = toWhiteCP(evalBefore, sideToMoveIsWhite: isWhite)
         let beforeForMe = isWhite ? beforeWhiteCP : -beforeWhiteCP
         if beforeForMe < 80 && bestForMe >= 200 && playedForMe < 100 {
@@ -337,6 +347,12 @@ struct MoveClassifier {
 
         // --- Now allocate boards (needed for remaining checks) ---
         let boardBefore = ChessBoard(fen: fenBefore)
+
+        // Already crushing: a "sacrifice" isn't impressive when you're up by a queen.
+        // Up to 5 points of material lead (≈ rook, or piece + 2 pawns) is fine; beyond
+        // that, the move is just consolidation, not brilliance.
+        let materialLead = boardBefore.materialCount(for: color) - boardBefore.materialCount(for: color.opposite)
+        if materialLead > 5 { return false }
 
         // Equal captures are NOT brilliant
         let capturedPiece = boardBefore.piece(at: toSq)
